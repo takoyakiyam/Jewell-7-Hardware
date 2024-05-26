@@ -9,6 +9,7 @@
 
 from register import Ui_ProductManagement
 from login import Ui_Dialog
+from forgotpassword import Ui_ForgotPassword
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
@@ -28,6 +29,9 @@ class Ui_MainWindow1(object):
         MainWindow1.hide()
         self.window.show()
 
+  
+
+ 
 
     def setupUi(self, MainWindow1):
         MainWindow1.setObjectName("MainWindow1")
@@ -68,6 +72,8 @@ class Ui_MainWindow1(object):
         self.LoginBtn.setGeometry(QtCore.QRect(80, 200, 331, 51))
         self.LoginBtn.clicked.connect(self.open)
 
+      
+
 
         font = QtGui.QFont()
         font.setFamily("Segoe UI")
@@ -79,6 +85,9 @@ class Ui_MainWindow1(object):
         self.LoginBtn.setDefault(True)
         self.LoginBtn.setFlat(False)
         self.LoginBtn.setObjectName("LoginBtn")
+
+          
+
         MainWindow1.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow1)
         self.statusbar.setObjectName("statusbar")
