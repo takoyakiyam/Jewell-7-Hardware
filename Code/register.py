@@ -105,8 +105,7 @@ class Ui_ProductManagement(object):
 
     def retranslateUi(self, ProductManagement):
         _translate = QtCore.QCoreApplication.translate
-        ProductManagement.setWindowTitle(_translate("ProductManagement", "MainWindow"))
-        self.label1.setText(_translate("ProductManagement", "Admin Registration"))
+        ProductManagement.setWindowTitle(_translate("ProductManagement", "Admin Registration"))
         self.label2.setText(_translate("ProductManagement", "   Jewell 7 "))
         self.label3.setText(_translate("ProductManagement", "  Hardware"))
         self.lineEdit1.setPlaceholderText(_translate("ProductManagement", "First Name:"))
