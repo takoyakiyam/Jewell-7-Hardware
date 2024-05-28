@@ -95,7 +95,7 @@ class Ui_Registration(object):
 
     def retranslateUi(self, Registration):
         _translate = QtCore.QCoreApplication.translate
-        Registration.setWindowTitle(_translate("Registration", "Dialog"))
+        Registration.setWindowTitle(_translate("Registration", "Registration"))
         self.label3.setText(_translate("Registration", "  Hardware"))
         self.label2.setText(_translate("Registration", "   Jewell 7 "))
         self.StaffBtn.setText(_translate("Registration", "Staff"))
