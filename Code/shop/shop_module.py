@@ -189,7 +189,9 @@ class Ui_MainWindow(object):
         self.stackedWidget.setCurrentWidget(self.shop_tab)
 
     def open_cart(self):
-        pass
+        self.cart_tab = CartTab(add_to_cart = self.shop_tab.add_to_cart)
+        self.stackedWidget.addWidget(self.cart_tab)
+        self.stackedWidget.setCurrentWidget(self.cart_tab)
 
     def open_products(self):
         pass
@@ -208,7 +210,7 @@ class Ui_MainWindow(object):
 
     def search_products(self):
         search_text = self.lineEdit.text()
-        # Implement the search functionality here
+        print(f"Searching for '{search_text}'")
 
     def add_to_cart(self):
         # Implement the add to cart functionality here
@@ -251,7 +253,7 @@ class ShopTab(QtWidgets.QWidget):
             qty = row_data[6]  # qty
             self.tableWidget.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(qty)))  # Convert qty to string before setting it as text
         conn.close()
-    
+
     def on_selection_changed(self):
         selected_rows = set()
         for item in self.tableWidget.selectedItems():
@@ -296,10 +298,8 @@ class ShopTab(QtWidgets.QWidget):
                     new_qty = current_qty - quantity
                     if new_qty > 0:
                         qty_item.setText(str(int(new_qty)))
-                        # Optionally, you can update the quantity in the database here if needed
                     elif new_qty == 0:
                         self.tableWidget.removeRow(row)
-                        # Optionally, you can also remove the item from the database here if needed
                     else:
                         QtWidgets.QMessageBox.warning(self, "Quantity Error", "Not enough items in stock.")
                 except ValueError:
@@ -325,8 +325,59 @@ class ShopTab(QtWidgets.QWidget):
             if dialog.exec_() == QDialog.Accepted:
                 quantity = dialog.get_quantity()
                 self.add_to_cart(quantity)
+                self.add_to_cart_button.clicked.connect(lambda: self.add_to_cart(quantity))
         else:
-            QtWidgets.QMessageBox.warning(self, "Selection Error", "Please select a product to add to the cart.")
+            QtWidgets.QMessageBox.warning(self, "Selection Error", "Please select a product to add to the cart.")     
+
+class CartTab(QtWidgets.QWidget):
+    def __init__(self, add_to_cart=None):
+        super().__init__()
+        self.add_to_cart_method = add_to_cart  # Store the add_to_cart method
+        self.initUI()
+        
+    def initUI(self):
+        self.setWindowTitle('Cart')
+        self.setGeometry(100, 100, 800, 600)
+        self.layout = QtWidgets.QVBoxLayout(self)
+
+        # Create a table to display cart items
+        self.cart_table = QtWidgets.QTableWidget()
+        self.cart_table.setColumnCount(4)
+        self.cart_table.setHorizontalHeaderLabels(['Product', 'Quantity', 'Price', 'Total'])
+        self.cart_table.horizontalHeader().setStretchLastSection(True)
+        self.cart_table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+
+        self.layout.addWidget(self.cart_table)
+
+        # Create buttons for cart operations
+        self.remove_button = QtWidgets.QPushButton("Remove Item")
+        self.update_button = QtWidgets.QPushButton("Update Quantity")
+        self.checkout_button = QtWidgets.QPushButton("Checkout")
+
+        self.layout.addWidget(self.remove_button)
+        self.layout.addWidget(self.update_button)
+        self.layout.addWidget(self.checkout_button)
+
+        # Connect buttons to methods
+        self.remove_button.clicked.connect(self.remove_item)
+        self.update_button.clicked.connect(self.update_quantity)
+        self.checkout_button.clicked.connect(self.checkout)
+
+    def load_cart_items(self):
+        # Implement loading cart items from the database
+        pass
+
+    def remove_item(self):
+        # Implement removing item from the cart
+        pass
+
+    def update_quantity(self):
+        # Implement updating item quantity in the cart
+        pass
+
+    def checkout(self):
+        # Implement checkout process
+        pass
 
 def main():
     import sys
