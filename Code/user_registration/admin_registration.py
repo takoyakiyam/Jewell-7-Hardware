@@ -2,12 +2,12 @@ import sqlite3
 from PyQt5 import QtCore, QtGui, QtWidgets
 from datetime import datetime
 
-class Ui_StaffRegistration(object):
-    def setupUi(self, StaffRegistration):
-        StaffRegistration.setObjectName("StaffRegistration")
-        StaffRegistration.resize(816, 715)
-        StaffRegistration.setStyleSheet("background-color:#D9D9D9;")
-        self.centralwidget = QtWidgets.QWidget(StaffRegistration)
+class Ui_AdminRegistration(object):
+    def setupUi(self, AdminRegistration):
+        AdminRegistration.setObjectName("AdminRegistration")
+        AdminRegistration.resize(816, 715)
+        AdminRegistration.setStyleSheet("background-color:#D9D9D9;")
+        self.centralwidget = QtWidgets.QWidget(AdminRegistration)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayoutWidget = QtWidgets.QWidget(self.centralwidget)
         self.gridLayoutWidget.setGeometry(QtCore.QRect(100, 60, 601, 585))
@@ -57,12 +57,29 @@ class Ui_StaffRegistration(object):
         self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.firstName_input)
         spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.formLayout_2.setItem(1, QtWidgets.QFormLayout.FieldRole, spacerItem1)
+        self.middleName_label = QtWidgets.QLabel(self.gridLayoutWidget)
+        font = QtGui.QFont()
+        font.setPointSize(20)
+        self.middleName_label.setFont(font)
+        self.middleName_label.setObjectName("middleName_label")
+        self.formLayout_2.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.middleName_label)
+        self.middleName_input = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        font = QtGui.QFont()
+        font.setPointSize(20)
+        self.middleName_input.setFont(font)
+        self.middleName_input.setStyleSheet("background-color:#FFFFFF;")
+        self.middleName_input.setText("")
+        self.middleName_input.setPlaceholderText("")
+        self.middleName_input.setObjectName("middleName_input")
+        self.formLayout_2.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.middleName_input)
+        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.formLayout_2.setItem(3, QtWidgets.QFormLayout.FieldRole, spacerItem2)
         self.lastName_label = QtWidgets.QLabel(self.gridLayoutWidget)
         font = QtGui.QFont()
         font.setPointSize(20)
         self.lastName_label.setFont(font)
         self.lastName_label.setObjectName("lastName_label")
-        self.formLayout_2.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.lastName_label)
+        self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.lastName_label)
         self.lastName_input = QtWidgets.QLineEdit(self.gridLayoutWidget)
         font = QtGui.QFont()
         font.setPointSize(20)
@@ -71,15 +88,15 @@ class Ui_StaffRegistration(object):
         self.lastName_input.setText("")
         self.lastName_input.setPlaceholderText("")
         self.lastName_input.setObjectName("lastName_input")
-        self.formLayout_2.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.lastName_input)
-        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.formLayout_2.setItem(3, QtWidgets.QFormLayout.FieldRole, spacerItem2)
+        self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.lastName_input)
+        spacerItem3 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.formLayout_2.setItem(5, QtWidgets.QFormLayout.FieldRole, spacerItem3)
         self.username_label = QtWidgets.QLabel(self.gridLayoutWidget)
         font = QtGui.QFont()
         font.setPointSize(20)
         self.username_label.setFont(font)
         self.username_label.setObjectName("username_label")
-        self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.username_label)
+        self.formLayout_2.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.username_label)
         self.username_input = QtWidgets.QLineEdit(self.gridLayoutWidget)
         font = QtGui.QFont()
         font.setPointSize(20)
@@ -88,15 +105,15 @@ class Ui_StaffRegistration(object):
         self.username_input.setText("")
         self.username_input.setPlaceholderText("")
         self.username_input.setObjectName("username_input")
-        self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.username_input)
-        spacerItem3 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.formLayout_2.setItem(5, QtWidgets.QFormLayout.FieldRole, spacerItem3)
+        self.formLayout_2.setWidget(6, QtWidgets.QFormLayout.FieldRole, self.username_input)
+        spacerItem4 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.formLayout_2.setItem(7, QtWidgets.QFormLayout.FieldRole, spacerItem4)
         self.password_label = QtWidgets.QLabel(self.gridLayoutWidget)
         font = QtGui.QFont()
         font.setPointSize(20)
         self.password_label.setFont(font)
         self.password_label.setObjectName("password_label")
-        self.formLayout_2.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.password_label)
+        self.formLayout_2.setWidget(8, QtWidgets.QFormLayout.LabelRole, self.password_label)
         self.password_input = QtWidgets.QLineEdit(self.gridLayoutWidget)
         font = QtGui.QFont()
         font.setPointSize(20)
@@ -106,15 +123,15 @@ class Ui_StaffRegistration(object):
         self.password_input.setEchoMode(QtWidgets.QLineEdit.Password)
         self.password_input.setPlaceholderText("")
         self.password_input.setObjectName("password_input")
-        self.formLayout_2.setWidget(6, QtWidgets.QFormLayout.FieldRole, self.password_input)
-        spacerItem4 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.formLayout_2.setItem(7, QtWidgets.QFormLayout.FieldRole, spacerItem4)
+        self.formLayout_2.setWidget(8, QtWidgets.QFormLayout.FieldRole, self.password_input)
+        spacerItem5 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.formLayout_2.setItem(9, QtWidgets.QFormLayout.FieldRole, spacerItem5)
         self.birthdate_label = QtWidgets.QLabel(self.gridLayoutWidget)
         font = QtGui.QFont()
         font.setPointSize(20)
         self.birthdate_label.setFont(font)
         self.birthdate_label.setObjectName("birthdate_label")
-        self.formLayout_2.setWidget(8, QtWidgets.QFormLayout.LabelRole, self.birthdate_label)
+        self.formLayout_2.setWidget(10, QtWidgets.QFormLayout.LabelRole, self.birthdate_label)
         self.birthdate_edit = QtWidgets.QDateEdit(self.gridLayoutWidget)
         font = QtGui.QFont()
         font.setPointSize(20)
@@ -123,15 +140,13 @@ class Ui_StaffRegistration(object):
         self.birthdate_edit.setStyleSheet("background-color:#FFFFFF;")
         self.birthdate_edit.setCalendarPopup(True)
         self.birthdate_edit.setObjectName("birthdate_edit")
-        self.formLayout_2.setWidget(8, QtWidgets.QFormLayout.FieldRole, self.birthdate_edit)
-        spacerItem5 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.formLayout_2.setItem(9, QtWidgets.QFormLayout.FieldRole, spacerItem5)
+        self.formLayout_2.setWidget(10, QtWidgets.QFormLayout.FieldRole, self.birthdate_edit)
         self.loa_label = QtWidgets.QLabel(self.gridLayoutWidget)
         font = QtGui.QFont()
         font.setPointSize(20)
         self.loa_label.setFont(font)
         self.loa_label.setObjectName("loa_label")
-        self.formLayout_2.setWidget(10, QtWidgets.QFormLayout.LabelRole, self.loa_label)
+        self.formLayout_2.setWidget(12, QtWidgets.QFormLayout.LabelRole, self.loa_label)
         self.loa_input = QtWidgets.QLineEdit(self.gridLayoutWidget)
         font = QtGui.QFont()
         font.setPointSize(20)
@@ -140,9 +155,11 @@ class Ui_StaffRegistration(object):
         self.loa_input.setReadOnly(True)
         self.loa_input.setPlaceholderText("")
         self.loa_input.setObjectName("loa_input")
-        self.formLayout_2.setWidget(10, QtWidgets.QFormLayout.FieldRole, self.loa_input)
+        self.formLayout_2.setWidget(12, QtWidgets.QFormLayout.FieldRole, self.loa_input)
         spacerItem6 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.formLayout_2.setItem(11, QtWidgets.QFormLayout.FieldRole, spacerItem6)
+        spacerItem7 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.formLayout_2.setItem(13, QtWidgets.QFormLayout.FieldRole, spacerItem7)
         self.verticalLayout.addLayout(self.formLayout_2)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
@@ -174,31 +191,33 @@ class Ui_StaffRegistration(object):
         self.horizontalLayout.addWidget(self.clearButton)
         self.verticalLayout.addLayout(self.horizontalLayout)
         self.gridLayout.addLayout(self.verticalLayout, 1, 0, 1, 1)
-        StaffRegistration.setCentralWidget(self.centralwidget)
-        self.statusbar = QtWidgets.QStatusBar(StaffRegistration)
+        AdminRegistration.setCentralWidget(self.centralwidget)
+        self.statusbar = QtWidgets.QStatusBar(AdminRegistration)
         self.statusbar.setObjectName("statusbar")
-        StaffRegistration.setStatusBar(self.statusbar)
+        AdminRegistration.setStatusBar(self.statusbar)
 
-        self.retranslateUi(StaffRegistration)
-        QtCore.QMetaObject.connectSlotsByName(StaffRegistration)
+        self.retranslateUi(AdminRegistration)
+        QtCore.QMetaObject.connectSlotsByName(AdminRegistration)
 
-    def retranslateUi(self, StaffRegistration):
+    def retranslateUi(self, AdminRegistration):
         _translate = QtCore.QCoreApplication.translate
-        StaffRegistration.setWindowTitle(_translate("StaffRegistration", "MainWindow"))
-        self.Jewell7.setText(_translate("StaffRegistration", "Jewell 7"))
-        self.Hardware.setText(_translate("StaffRegistration", "Hardware"))
-        self.firstName_label.setText(_translate("StaffRegistration", "First Name:"))
-        self.lastName_label.setText(_translate("StaffRegistration", "Last Name:"))
-        self.username_label.setText(_translate("StaffRegistration", "Username:"))
-        self.password_label.setText(_translate("StaffRegistration", "Password:"))
-        self.birthdate_label.setText(_translate("StaffRegistration", "Birthdate:"))
-        self.loa_label.setText(_translate("StaffRegistration", "LOA:"))
-        self.loa_input.setText(_translate("StaffRegistration", "staff"))
-        self.registerButton.setText(_translate("StaffRegistration", "Register"))
-        self.clearButton.setText(_translate("StaffRegistration", "Clear"))
+        AdminRegistration.setWindowTitle(_translate("AdminRegistration", "MainWindow"))
+        self.Jewell7.setText(_translate("AdminRegistration", "Jewell 7"))
+        self.Hardware.setText(_translate("AdminRegistration", "Hardware"))
+        self.firstName_label.setText(_translate("AdminRegistration", "First Name:"))
+        self.middleName_label.setText(_translate("AdminRegistration", "Middle Name:"))
+        self.lastName_label.setText(_translate("AdminRegistration", "Last Name:"))
+        self.username_label.setText(_translate("AdminRegistration", "Username:"))
+        self.password_label.setText(_translate("AdminRegistration", "Password:"))
+        self.birthdate_label.setText(_translate("AdminRegistration", "Birthdate:"))
+        self.loa_label.setText(_translate("AdminRegistration", "LOA:"))
+        self.loa_input.setText(_translate("AdminRegistration", "admin"))
+        self.registerButton.setText(_translate("AdminRegistration", "Register"))
+        self.clearButton.setText(_translate("AdminRegistration", "Clear"))
 
     def clear_text(self):
         self.firstName_input.clear()
+        self.middleName_input.clear()
         self.lastName_input.clear()
         self.username_input.clear()
         self.password_input.clear()
@@ -206,16 +225,22 @@ class Ui_StaffRegistration(object):
 
     def register_user(self):
         # Fetching data from input fields
-        first_name = self.firstName_input.text()
-        last_name = self.lastName_input.text()
-        username = self.username_input.text()
-        password = self.password_input.text()
+        first_name = self.firstName_input.text().strip()
+        middle_name = self.middleName_input.text().strip()
+        last_name = self.lastName_input.text().strip()
+        username = self.username_input.text().strip()
+        password = self.password_input.text().strip()
         birthdate = self.birthdate_edit.date().toString(QtCore.Qt.ISODate)
-        loa = self.loa_input.text()
+        loa = self.loa_input.text().strip()
 
-        # Validate input fields
-        if not first_name or not last_name or not username or not password:
-            self.show_error_message("All fields are required.")
+        # Validation: Check if any field is empty
+        if not all([first_name, last_name, username, password, birthdate, loa]):
+            # Displaying a message box for error
+            msg = QtWidgets.QMessageBox()
+            msg.setIcon(QtWidgets.QMessageBox.Warning)
+            msg.setText("Please fill in all the fields.")
+            msg.setWindowTitle("Error")
+            msg.exec_()
             return
 
         # Get the current date
@@ -227,23 +252,16 @@ class Ui_StaffRegistration(object):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
 
-        # Check if username already exists
-        cursor.execute("SELECT username FROM users WHERE username=?", (username,))
-        if cursor.fetchone():
-            self.show_error_message("Username already exists. Please choose a different username.")
-            conn.close()
-            return
-
         # Inserting data into the users table
         cursor.execute('''INSERT INTO users (first_name, last_name, username, password, loa) 
-                  VALUES (?, ?, ?, ?, ?)''', (first_name, last_name, username, password, loa))
+                          VALUES (?, ?, ?, ?, ?)''', (first_name, last_name, username, password, loa))
 
         # Retrieve the user_id of the newly inserted user
         user_id = cursor.lastrowid  # This fetches the last inserted row id, which is the user_id
 
         # Inserting data into the admin table using the retrieved user_id
-        cursor.execute('''INSERT INTO staff (first_name, last_name, birthdate, date_started, user_id) 
-                  VALUES (?, ?, ?, ?, ?)''', (first_name, last_name, birthdate, date_started, user_id))
+        cursor.execute('''INSERT INTO admin (first_name, last_name, birthdate, date_started, middle_name, user_id) 
+                          VALUES (?, ?, ?, ?, ?, ?)''', (first_name, last_name, birthdate, date_started, middle_name, user_id))
 
         # Committing the transaction and closing connection
         conn.commit()
@@ -256,18 +274,11 @@ class Ui_StaffRegistration(object):
         msg.setWindowTitle("Success")
         msg.exec_()
 
-    def show_error_message(self, message):
-        msg = QtWidgets.QMessageBox()
-        msg.setIcon(QtWidgets.QMessageBox.Warning)
-        msg.setText(message)
-        msg.setWindowTitle("Error")
-        msg.exec_()
-
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    StaffRegistration = QtWidgets.QMainWindow()
-    ui = Ui_StaffRegistration()
-    ui.setupUi(StaffRegistration)
-    StaffRegistration.show()
+    AdminRegistration = QtWidgets.QMainWindow()
+    ui = Ui_AdminRegistration()
+    ui.setupUi(AdminRegistration)
+    AdminRegistration.show()
     sys.exit(app.exec_())
