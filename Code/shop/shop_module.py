@@ -407,7 +407,9 @@ class CartTab(QtWidgets.QWidget):
         self.update_button.clicked.connect(self.update_quantity)
         self.checkout_button.clicked.connect(self.checkout)
 
-    
+        # Connect itemSelectionChanged signal to handle row selection
+        self.cart_table.itemSelectionChanged.connect(self.on_selection_changed)
+
     def load_cart_items(self):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
@@ -420,6 +422,16 @@ class CartTab(QtWidgets.QWidget):
             self.cart_table.setItem(row_number, 2, QtWidgets.QTableWidgetItem(str(row_data[2])))  # Price
             self.cart_table.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(row_data[2])))  # Total
         conn.close()
+        
+    def on_selection_changed(self):
+        selected_rows = set()
+        for item in self.cart_table.selectedItems():
+            selected_rows.add(item.row())
+        for row in selected_rows:
+            for column in range(self.cart_table.columnCount()):
+                item = self.cart_table.item(row, column)
+                if item:
+                    item.setSelected(True)
 
     def remove_item(self):
         selected_rows = set()
