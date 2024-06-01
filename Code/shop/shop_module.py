@@ -337,6 +337,10 @@ class ShopTab(QtWidgets.QWidget):
                         cursor.execute('''INSERT INTO cart (qty, product_name, date, total_price, transaction_id, product_id, user_id, log_id)
                                           VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', (quantity, product_name, date, total_price, transaction_id, product_id, user_id, log_id))
                         conn.commit()
+
+                        # If the new quantity is 0, remove the row from the table
+                        if new_qty == 0:
+                            self.tableWidget.removeRow(row)
                         conn.close()
 
                         # Emit signal to notify cart tab
@@ -382,8 +386,8 @@ class CartTab(QtWidgets.QWidget):
 
         # Create a table to display cart items
         self.cart_table = QtWidgets.QTableWidget()
-        self.cart_table.setColumnCount(5)
-        self.cart_table.setHorizontalHeaderLabels(['Product', 'Quantity', 'Price', 'Total', 'Date'])
+        self.cart_table.setColumnCount(4)
+        self.cart_table.setHorizontalHeaderLabels(['Product', 'Quantity', 'Price', 'Total'])
         self.cart_table.horizontalHeader().setStretchLastSection(True)
         self.cart_table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
