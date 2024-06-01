@@ -178,11 +178,9 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         
-
         self.modifyUser_button.clicked.connect(self.open_modify_user_dialog)
         self.modifyUser_button.setIcon(QtGui.QIcon("edit_icon.png"))  # Set icon for the modify button
         self.modifyUser_button.setIconSize(QtCore.QSize(36, 36))  # Increase icon size
-
 
         self.voidProduct_button.clicked.connect(self.void_user)  # Connect void button to the void_product method
         self.voidProduct_button.setIcon(QtGui.QIcon("bin_icon.png"))  # Set icon for the modify button
@@ -213,19 +211,19 @@ class Ui_MainWindow(object):
 
         if search_query:
             # Filter users based on the search query
-            cur.execute("SELECT rowid, username, password, loa FROM users WHERE "
-                        "username LIKE ? OR password LIKE ? OR loa LIKE ?",
-                        ('%{}%'.format(search_query), '%{}%'.format(search_query), '%{}%'.format(search_query)))
+            cur.execute("SELECT rowid, first_name, last_name, username, password, loa FROM users WHERE "
+                        "first_name LIKE ? OR last_name LIKE ? OR username LIKE ? OR password LIKE ? OR loa LIKE ?",
+                        ('%{}%'.format(search_query), '%{}%'.format(search_query), '%{}%'.format(search_query), '%{}%'.format(search_query), '%{}%'.format(search_query)))
         else:
             # Fetch all users if no search query provided
-            cur.execute("SELECT rowid, username, password, loa FROM users")
+            cur.execute("SELECT rowid, first_name, last_name, username, password, loa FROM users")
 
         users = cur.fetchall()
     
         # Display data in the tableWidget
         self.tableWidget.setRowCount(len(users))
-        self.tableWidget.setColumnCount(4)  # Adjusted column count to include rowid
-        self.tableWidget.setHorizontalHeaderLabels(["RowID", "Username", "Password", "LOA"])
+        self.tableWidget.setColumnCount(6)  # Adjusted column count to include rowid
+        self.tableWidget.setHorizontalHeaderLabels(["RowID", "First Name", "Last Name", "Username", "Password", "LOA"])
 
         for i, product in enumerate(users):
             for j, value in enumerate(product):
@@ -237,7 +235,6 @@ class Ui_MainWindow(object):
         # Hide the RowID column
         self.tableWidget.setColumnHidden(0, True)
 
-
     def resize_table(self):
         header = self.tableWidget.horizontalHeader()
         for i in range(1, self.tableWidget.columnCount() - 1):  # Skip RowID column
@@ -246,7 +243,6 @@ class Ui_MainWindow(object):
 
         vertical_header = self.tableWidget.verticalHeader()
         vertical_header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-
 
     def open_modify_user_dialog(self):
         selected_row = self.tableWidget.currentRow()
@@ -257,7 +253,7 @@ class Ui_MainWindow(object):
 
                 conn = sqlite3.connect('j7h.db')
                 cur = conn.cursor()
-                cur.execute("SELECT username, password, loa FROM users WHERE rowid = ?", (rowid,))
+                cur.execute("SELECT first_name, last_name, username, password, loa FROM users WHERE rowid = ?", (rowid,))
                 user = cur.fetchone()
                 conn.close()
 
@@ -309,9 +305,23 @@ class ModifyUserDialog(QtWidgets.QDialog):
         self.layout = QtWidgets.QVBoxLayout()
         validator = QtGui.QRegExpValidator(QtCore.QRegExp("[A-Za-z0-9]+"))
 
+        self.firstName_label = QtWidgets.QLabel("First Name (required)")
+        self.firstName_input = QtWidgets.QLineEdit()
+        self.firstName_input.setText(user[0])
+        self.firstName_input.setValidator(validator)
+        self.layout.addWidget(self.firstName_label)
+        self.layout.addWidget(self.firstName_input)
+
+        self.lastName_label = QtWidgets.QLabel("Last_Name (required)")
+        self.lastName_input = QtWidgets.QLineEdit()
+        self.lastName_input.setText(user[1])
+        self.lastName_input.setValidator(validator)
+        self.layout.addWidget(self.lastName_label)
+        self.layout.addWidget(self.lastName_input)
+
         self.username_label = QtWidgets.QLabel("Username (required)")
         self.username_input = QtWidgets.QLineEdit()
-        self.username_input.setText(user[0])
+        self.username_input.setText(user[2])
         self.username_input.setValidator(validator)
         self.layout.addWidget(self.username_label)
         self.layout.addWidget(self.username_input)
@@ -319,15 +329,9 @@ class ModifyUserDialog(QtWidgets.QDialog):
         self.password_label = QtWidgets.QLabel("Password (required)")
         self.password_input = QtWidgets.QLineEdit()
         self.password_input.setValidator(validator)
-        self.password_input.setText(user[1] or "")
+        self.password_input.setText(user[3] or "")
         self.layout.addWidget(self.password_label)
         self.layout.addWidget(self.password_input)
-
-        self.loa_label = QtWidgets.QLabel("LOA (required)")
-        self.loa_input = QtWidgets.QLineEdit()
-        self.loa_input.setText(user[2] or "")
-        self.layout.addWidget(self.loa_label)
-        self.layout.addWidget(self.loa_input)
 
         self.modify_button = QtWidgets.QPushButton("Modify")
         self.modify_button.clicked.connect(self.modify_user)
@@ -335,18 +339,19 @@ class ModifyUserDialog(QtWidgets.QDialog):
         self.setLayout(self.layout)
 
     def modify_user(self):
+        first_name = self.firstName_input.text()
+        last_name = self.lastName_input.text()
         username = self.username_input.text()
         password = self.password_input.text()
-        loa = self.loa_input.text()
 
-        if not username or not password or not loa:
-            QtWidgets.QMessageBox.warning(self, "Input Error", "Username, password, and loa fields must be filled")
+        if not first_name or not last_name or not username or not password:
+            QtWidgets.QMessageBox.warning(self, "Input Error", "All fields must be filled")
             return
 
         conn = sqlite3.connect('j7h.db')
         cur = conn.cursor()
-        cur.execute("UPDATE users SET username = ?, password = ?, loa = ? WHERE rowid = ?",
-                    (username, password, loa, self.rowid))
+        cur.execute("UPDATE users SET first_name = ?, last_name = ?, username = ?, password = ? WHERE rowid = ?",
+                    (first_name, last_name, username, password, self.rowid))
         conn.commit()
         conn.close()
 
