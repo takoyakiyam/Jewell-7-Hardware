@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QSpinBox, QPushButton
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -295,45 +296,55 @@ class ShopTab(QtWidgets.QWidget):
         self.tableWidget.itemSelectionChanged.connect(self.on_selection_changed)
 
     def add_to_cart(self, quantity):
-            selected_rows = set()
-            for item in self.tableWidget.selectedItems():
-                selected_rows.add(item.row())
-            for row in selected_rows:
-                product_item = self.tableWidget.item(row, 0)  # Product name
-                price_item = self.tableWidget.item(row, 2)  # Price
-                qty_item = self.tableWidget.item(row, 3)  # Items in stock
+        selected_rows = set()
+        for item in self.tableWidget.selectedItems():
+            selected_rows.add(item.row())
+        for row in selected_rows:
+            product_item = self.tableWidget.item(row, 0)  # Product name
+            price_item = self.tableWidget.item(row, 2)  # Price
+            qty_item = self.tableWidget.item(row, 3)  # Items in stock
 
-                if qty_item is not None and product_item is not None and price_item is not None:
-                    try:
-                        current_qty = float(qty_item.text())
-                        new_qty = current_qty - quantity
-                        if new_qty >= 0:
-                            qty_item.setText(str(int(new_qty)))
+            if qty_item is not None and product_item is not None and price_item is not None:
+                try:
+                    current_qty = float(qty_item.text())
+                    new_qty = current_qty - quantity
+                    if new_qty >= 0:
+                        qty_item.setText(str(int(new_qty)))
 
-                            # Add item to cart in database
-                            conn = sqlite3.connect('j7h.db')
-                            cursor = conn.cursor()
-                            cursor.execute('''CREATE TABLE IF NOT EXISTS cart (
-                                                id INTEGER PRIMARY KEY,
-                                                product TEXT,
-                                                quantity INTEGER,
-                                                price REAL,
-                                                total REAL)''')
+                        # Add item to cart in database
+                        conn = sqlite3.connect('j7h.db')
+                        cursor = conn.cursor()
+                        cursor.execute('''CREATE TABLE IF NOT EXISTS cart (
+                                            cart_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                            qty INTEGER,
+                                            product_name TEXT,
+                                            date TEXT,
+                                            total_price NUMERIC,
+                                            transaction_id INTEGER,
+                                            product_id INTEGER,
+                                            user_id INTEGER,
+                                            log_id INTEGER)''')
 
-                            product = product_item.text()
-                            price = float(price_item.text())
-                            total = quantity * price
-                            cursor.execute('''INSERT INTO cart (product, quantity, price, total)
-                                            VALUES (?, ?, ?, ?)''', (product, quantity, price, total))
-                            conn.commit()
-                            conn.close()
+                        product_id = 1  # Replace with actual product ID retrieval logic
+                        product_name = product_item.text()
+                        price = float(price_item.text())
+                        total_price = quantity * price
+                        user_id = 1  # Replace with actual user ID retrieval logic
+                        log_id = 1  # Replace with actual log ID retrieval logic
+                        transaction_id = 1  # Replace with actual transaction ID logic
+                        date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Current date and time
 
-                            # Emit signal to notify cart tab
-                            self.item_added_to_cart.emit()
-                        else:
-                            QtWidgets.QMessageBox.warning(self, "Quantity Error", "Not enough items in stock.")
-                    except ValueError:
-                        pass
+                        cursor.execute('''INSERT INTO cart (qty, product_name, date, total_price, transaction_id, product_id, user_id, log_id)
+                                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', (quantity, product_name, date, total_price, transaction_id, product_id, user_id, log_id))
+                        conn.commit()
+                        conn.close()
+
+                        # Emit signal to notify cart tab
+                        self.item_added_to_cart.emit()
+                    else:
+                        QtWidgets.QMessageBox.warning(self, "Quantity Error", "Not enough items in stock.")
+                except ValueError:
+                    pass
 
     def show_add_to_cart_dialog(self):
         selected_rows = set()
@@ -369,13 +380,16 @@ class CartTab(QtWidgets.QWidget):
         self.setGeometry(100, 100, 800, 600)
         self.layout = QtWidgets.QVBoxLayout(self)
 
+        # Create a table to display cart items
         self.cart_table = QtWidgets.QTableWidget()
-        self.cart_table.setColumnCount(4)
-        self.cart_table.setHorizontalHeaderLabels(['Product', 'Quantity', 'Price', 'Total'])
+        self.cart_table.setColumnCount(5)
+        self.cart_table.setHorizontalHeaderLabels(['Product', 'Quantity', 'Price', 'Total', 'Date'])
         self.cart_table.horizontalHeader().setStretchLastSection(True)
         self.cart_table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+
         self.layout.addWidget(self.cart_table)
 
+        # Create buttons for cart operations
         self.remove_button = QtWidgets.QPushButton("Remove Item")
         self.update_button = QtWidgets.QPushButton("Update Quantity")
         self.checkout_button = QtWidgets.QPushButton("Checkout")
@@ -384,74 +398,85 @@ class CartTab(QtWidgets.QWidget):
         self.layout.addWidget(self.update_button)
         self.layout.addWidget(self.checkout_button)
 
+        # Connect buttons to methods
         self.remove_button.clicked.connect(self.remove_item)
         self.update_button.clicked.connect(self.update_quantity)
         self.checkout_button.clicked.connect(self.checkout)
 
-        self.load_cart_items()
-
+    
     def load_cart_items(self):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT product, quantity, price, total FROM cart")
+        cursor.execute("SELECT product_name, qty, total_price FROM cart")  # Changed query to exclude 'date'
         rows = cursor.fetchall()
         self.cart_table.setRowCount(len(rows))
         for row_number, row_data in enumerate(rows):
-            for column_number, data in enumerate(row_data):
-                self.cart_table.setItem(row_number, column_number, QtWidgets.QTableWidgetItem(str(data)))
+            self.cart_table.setItem(row_number, 0, QtWidgets.QTableWidgetItem(str(row_data[0])))  # Product Name
+            self.cart_table.setItem(row_number, 1, QtWidgets.QTableWidgetItem(str(row_data[1])))  # Quantity
+            self.cart_table.setItem(row_number, 2, QtWidgets.QTableWidgetItem(str(row_data[2])))  # Price
+            self.cart_table.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(row_data[2])))  # Total
         conn.close()
 
-    def on_selection_changed(self):
-        selected_rows = set()
-        for item in self.tableWidget.selectedItems():
-            selected_rows.add(item.row())
-        for row in selected_rows:
-            for column in range(self.tableWidget.columnCount()):
-                item = self.tableWidget.item(row, column)
-                if item:
-                    item.setSelected(True)
-                    
     def remove_item(self):
         selected_rows = set()
         for item in self.cart_table.selectedItems():
             selected_rows.add(item.row())
+        conn = sqlite3.connect('j7h.db')
+        cursor = conn.cursor()
         for row in selected_rows:
-            product_item = self.cart_table.item(row, 0)  # Product name
+            product_item = self.cart_table.item(row, 0)
             if product_item is not None:
-                product = product_item.text()
-                conn = sqlite3.connect('j7h.db')
-                cursor = conn.cursor()
-                cursor.execute("DELETE FROM cart WHERE product = ?", (product,))
-                conn.commit()
-                conn.close()
-                self.cart_table.removeRow(row)
+                product_name = product_item.text()
+                cursor.execute("DELETE FROM cart WHERE product_name = ?", (product_name,))
+        conn.commit()
+        conn.close()
+        self.load_cart_items()
 
     def update_quantity(self):
         selected_rows = set()
         for item in self.cart_table.selectedItems():
             selected_rows.add(item.row())
-        for row in selected_rows:
-            product_item = self.cart_table.item(row, 0)
-            quantity_item = self.cart_table.item(row, 1)
-            if product_item is not None and quantity_item is not None:
-                product = product_item.text()
-                quantity, ok = QtWidgets.QInputDialog.getInt(self, "Update Quantity", "Enter new quantity:")
-                if ok:
-                    conn = sqlite3.connect('j7h.db')
-                    cursor = conn.cursor()
-                    cursor.execute("UPDATE cart SET quantity = ?, total = price * ? WHERE product = ?", (quantity, quantity, product))
-                    conn.commit()
-                    conn.close()
-                    self.load_cart_items()
+        if selected_rows:
+            dialog = AddToCartDialog()
+            if dialog.exec_() == QDialog.Accepted:
+                quantity = dialog.get_quantity()
+                conn = sqlite3.connect('j7h.db')
+                cursor = conn.cursor()
+                for row in selected_rows:
+                    product_item = self.cart_table.item(row, 0)
+                    price_item = self.cart_table.item(row, 2)
+                    if product_item is not None and price_item is not None:
+                        product_name = product_item.text()
+                        price = float(price_item.text())
+                        total = quantity * price
+                        cursor.execute("UPDATE cart SET qty = ?, total_price = ? WHERE product_name = ?", (quantity, total, product_name))
+                conn.commit()
+                conn.close()
+                self.load_cart_items()
 
     def checkout(self):
-        QtWidgets.QMessageBox.information(self, "Checkout", "Proceed to checkout")
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
+        cursor.execute("SELECT * FROM cart")
+        rows = cursor.fetchall()
+        for row in rows:
+            cursor.execute('''CREATE TABLE IF NOT EXISTS transactions (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                qty INTEGER,
+                                product_name TEXT,
+                                date TEXT,
+                                total_price NUMERIC,
+                                transaction_id INTEGER,
+                                product_id INTEGER,
+                                user_id INTEGER,
+                                log_id INTEGER)''')
+            cursor.execute("INSERT INTO transactions (qty, product_name, date, total_price, transaction_id, product_id, user_id, log_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                           (row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]))
         cursor.execute("DELETE FROM cart")
         conn.commit()
         conn.close()
         self.load_cart_items()
+        QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
 
 
 def main():
