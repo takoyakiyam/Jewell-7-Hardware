@@ -187,11 +187,17 @@ class Ui_MainWindow(object):
         self.shop_tab = ShopTab()
         self.stackedWidget.addWidget(self.shop_tab)
         self.stackedWidget.setCurrentWidget(self.shop_tab)
+        self.shop_tab.item_added_to_cart.connect(self.update_cart_tab)
 
     def open_cart(self):
-        self.cart_tab = CartTab(add_to_cart = self.shop_tab.add_to_cart)
+        self.cart_tab = CartTab()
         self.stackedWidget.addWidget(self.cart_tab)
         self.stackedWidget.setCurrentWidget(self.cart_tab)
+        self.update_cart_tab()
+
+    def update_cart_tab(self):
+        if hasattr(self, 'cart_tab'):
+            self.cart_tab.load_cart_items()
 
     def open_products(self):
         pass
@@ -236,6 +242,8 @@ class AddToCartDialog(QDialog):
 
 
 class ShopTab(QtWidgets.QWidget):
+    item_added_to_cart = QtCore.pyqtSignal()
+
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -287,23 +295,45 @@ class ShopTab(QtWidgets.QWidget):
         self.tableWidget.itemSelectionChanged.connect(self.on_selection_changed)
 
     def add_to_cart(self, quantity):
-        selected_rows = set()
-        for item in self.tableWidget.selectedItems():
-            selected_rows.add(item.row())
-        for row in selected_rows:
-            qty_item = self.tableWidget.item(row, 3)  # Index 3 corresponds to the "Items in Stock" column
-            if qty_item is not None:
-                try:
-                    current_qty = float(qty_item.text())
-                    new_qty = current_qty - quantity
-                    if new_qty > 0:
-                        qty_item.setText(str(int(new_qty)))
-                    elif new_qty == 0:
-                        self.tableWidget.removeRow(row)
-                    else:
-                        QtWidgets.QMessageBox.warning(self, "Quantity Error", "Not enough items in stock.")
-                except ValueError:
-                    pass
+            selected_rows = set()
+            for item in self.tableWidget.selectedItems():
+                selected_rows.add(item.row())
+            for row in selected_rows:
+                product_item = self.tableWidget.item(row, 0)  # Product name
+                price_item = self.tableWidget.item(row, 2)  # Price
+                qty_item = self.tableWidget.item(row, 3)  # Items in stock
+
+                if qty_item is not None and product_item is not None and price_item is not None:
+                    try:
+                        current_qty = float(qty_item.text())
+                        new_qty = current_qty - quantity
+                        if new_qty >= 0:
+                            qty_item.setText(str(int(new_qty)))
+
+                            # Add item to cart in database
+                            conn = sqlite3.connect('j7h.db')
+                            cursor = conn.cursor()
+                            cursor.execute('''CREATE TABLE IF NOT EXISTS cart (
+                                                id INTEGER PRIMARY KEY,
+                                                product TEXT,
+                                                quantity INTEGER,
+                                                price REAL,
+                                                total REAL)''')
+
+                            product = product_item.text()
+                            price = float(price_item.text())
+                            total = quantity * price
+                            cursor.execute('''INSERT INTO cart (product, quantity, price, total)
+                                            VALUES (?, ?, ?, ?)''', (product, quantity, price, total))
+                            conn.commit()
+                            conn.close()
+
+                            # Emit signal to notify cart tab
+                            self.item_added_to_cart.emit()
+                        else:
+                            QtWidgets.QMessageBox.warning(self, "Quantity Error", "Not enough items in stock.")
+                    except ValueError:
+                        pass
 
     def show_add_to_cart_dialog(self):
         selected_rows = set()
@@ -330,9 +360,8 @@ class ShopTab(QtWidgets.QWidget):
             QtWidgets.QMessageBox.warning(self, "Selection Error", "Please select a product to add to the cart.")     
 
 class CartTab(QtWidgets.QWidget):
-    def __init__(self, add_to_cart=None):
+    def __init__(self):
         super().__init__()
-        self.add_to_cart_method = add_to_cart  # Store the add_to_cart method
         self.initUI()
         
     def initUI(self):
@@ -340,16 +369,13 @@ class CartTab(QtWidgets.QWidget):
         self.setGeometry(100, 100, 800, 600)
         self.layout = QtWidgets.QVBoxLayout(self)
 
-        # Create a table to display cart items
         self.cart_table = QtWidgets.QTableWidget()
         self.cart_table.setColumnCount(4)
         self.cart_table.setHorizontalHeaderLabels(['Product', 'Quantity', 'Price', 'Total'])
         self.cart_table.horizontalHeader().setStretchLastSection(True)
         self.cart_table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-
         self.layout.addWidget(self.cart_table)
 
-        # Create buttons for cart operations
         self.remove_button = QtWidgets.QPushButton("Remove Item")
         self.update_button = QtWidgets.QPushButton("Update Quantity")
         self.checkout_button = QtWidgets.QPushButton("Checkout")
@@ -358,26 +384,75 @@ class CartTab(QtWidgets.QWidget):
         self.layout.addWidget(self.update_button)
         self.layout.addWidget(self.checkout_button)
 
-        # Connect buttons to methods
         self.remove_button.clicked.connect(self.remove_item)
         self.update_button.clicked.connect(self.update_quantity)
         self.checkout_button.clicked.connect(self.checkout)
 
-    def load_cart_items(self):
-        # Implement loading cart items from the database
-        pass
+        self.load_cart_items()
 
+    def load_cart_items(self):
+        conn = sqlite3.connect('j7h.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT product, quantity, price, total FROM cart")
+        rows = cursor.fetchall()
+        self.cart_table.setRowCount(len(rows))
+        for row_number, row_data in enumerate(rows):
+            for column_number, data in enumerate(row_data):
+                self.cart_table.setItem(row_number, column_number, QtWidgets.QTableWidgetItem(str(data)))
+        conn.close()
+
+    def on_selection_changed(self):
+        selected_rows = set()
+        for item in self.tableWidget.selectedItems():
+            selected_rows.add(item.row())
+        for row in selected_rows:
+            for column in range(self.tableWidget.columnCount()):
+                item = self.tableWidget.item(row, column)
+                if item:
+                    item.setSelected(True)
+                    
     def remove_item(self):
-        # Implement removing item from the cart
-        pass
+        selected_rows = set()
+        for item in self.cart_table.selectedItems():
+            selected_rows.add(item.row())
+        for row in selected_rows:
+            product_item = self.cart_table.item(row, 0)  # Product name
+            if product_item is not None:
+                product = product_item.text()
+                conn = sqlite3.connect('j7h.db')
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM cart WHERE product = ?", (product,))
+                conn.commit()
+                conn.close()
+                self.cart_table.removeRow(row)
 
     def update_quantity(self):
-        # Implement updating item quantity in the cart
-        pass
+        selected_rows = set()
+        for item in self.cart_table.selectedItems():
+            selected_rows.add(item.row())
+        for row in selected_rows:
+            product_item = self.cart_table.item(row, 0)
+            quantity_item = self.cart_table.item(row, 1)
+            if product_item is not None and quantity_item is not None:
+                product = product_item.text()
+                quantity, ok = QtWidgets.QInputDialog.getInt(self, "Update Quantity", "Enter new quantity:")
+                if ok:
+                    conn = sqlite3.connect('j7h.db')
+                    cursor = conn.cursor()
+                    cursor.execute("UPDATE cart SET quantity = ?, total = price * ? WHERE product = ?", (quantity, quantity, product))
+                    conn.commit()
+                    conn.close()
+                    self.load_cart_items()
 
     def checkout(self):
-        # Implement checkout process
-        pass
+        QtWidgets.QMessageBox.information(self, "Checkout", "Proceed to checkout")
+        conn = sqlite3.connect('j7h.db')
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM cart")
+        conn.commit()
+        conn.close()
+        self.load_cart_items()
+
 
 def main():
     import sys
