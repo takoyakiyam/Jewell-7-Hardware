@@ -1,4 +1,5 @@
 import sqlite3
+import sys
 from datetime import datetime
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QSpinBox, QPushButton
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -207,7 +208,9 @@ class Ui_MainWindow(object):
         pass
 
     def open_reports(self):
-        pass
+        self.reports_tab = ReportsTab()
+        self.stackedWidget.addWidget(self.reports_tab)
+        self.stackedWidget.setCurrentWidget(self.reports_tab)
 
     def open_analytics(self):
         pass
@@ -241,7 +244,7 @@ class AddToCartDialog(QDialog):
     def get_quantity(self):
         return self.spin_box.value()
 
-
+# Class for Shop
 class ShopTab(QtWidgets.QWidget):
     item_added_to_cart = QtCore.pyqtSignal()
 
@@ -334,8 +337,9 @@ class ShopTab(QtWidgets.QWidget):
                         transaction_id = 1  # Replace with actual transaction ID logic
                         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Current date and time
 
-                        cursor.execute('''INSERT INTO cart (qty, product_name, date, total_price, transaction_id, product_id, user_id, log_id)
-                                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', (quantity, product_name, date, total_price, transaction_id, product_id, user_id, log_id))
+                        cursor.execute('''INSERT INTO cart (qty, product_name, date, total_price, transaction_id, product_id, log_id)
+                  VALUES (?, ?, ?, ?, ?, ?, ?)''', (quantity, product_name, date, total_price, transaction_id, product_id, log_id))
+
                         conn.commit()
 
                         # If the new quantity is 0, remove the row from the table
@@ -374,6 +378,7 @@ class ShopTab(QtWidgets.QWidget):
         else:
             QtWidgets.QMessageBox.warning(self, "Selection Error", "Please select a product to add to the cart.")     
 
+#Class for Cart Tab
 class CartTab(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
@@ -396,16 +401,21 @@ class CartTab(QtWidgets.QWidget):
         # Create buttons for cart operations
         self.remove_button = QtWidgets.QPushButton("Remove Item")
         self.update_button = QtWidgets.QPushButton("Update Quantity")
+        self.clear_button = QtWidgets.QPushButton("Clear Cart")
         self.checkout_button = QtWidgets.QPushButton("Checkout")
+
 
         self.layout.addWidget(self.remove_button)
         self.layout.addWidget(self.update_button)
+        self.layout.addWidget(self.clear_button)
         self.layout.addWidget(self.checkout_button)
-
+        
         # Connect buttons to methods
         self.remove_button.clicked.connect(self.remove_item)
         self.update_button.clicked.connect(self.update_quantity)
+        self.clear_button.clicked.connect(self.clear_cart) 
         self.checkout_button.clicked.connect(self.checkout)
+        
 
         # Connect itemSelectionChanged signal to handle row selection
         self.cart_table.itemSelectionChanged.connect(self.on_selection_changed)
@@ -413,7 +423,7 @@ class CartTab(QtWidgets.QWidget):
     def load_cart_items(self):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT product_name, qty, total_price FROM cart")  # Changed query to exclude 'date'
+        cursor.execute("SELECT product_name, qty, total_price FROM cart")
         rows = cursor.fetchall()
         self.cart_table.setRowCount(len(rows))
         for row_number, row_data in enumerate(rows):
@@ -470,6 +480,15 @@ class CartTab(QtWidgets.QWidget):
                 conn.close()
                 self.load_cart_items()
 
+    def clear_cart(self):
+        conn = sqlite3.connect('j7h.db')
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM cart")
+        conn.commit()
+        conn.close()
+        self.load_cart_items()
+        QtWidgets.QMessageBox.information(self, "Clear Cart", "All items have been removed from the cart.")
+
     def checkout(self):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
@@ -494,6 +513,61 @@ class CartTab(QtWidgets.QWidget):
         self.load_cart_items()
         QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
 
+#Class for Reports Tab
+class ReportsTab(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+        
+    def initUI(self):
+        self.setWindowTitle('Reports')
+        self.setGeometry(100, 100, 800, 600)
+        self.layout = QtWidgets.QVBoxLayout(self)
+
+        # Create tab widget and sub-tabs
+        self.tab_widget = QtWidgets.QTabWidget()
+        self.reports_tab = QtWidgets.QWidget()
+        self.transactions_tab = QtWidgets.QWidget()
+
+        # Add sub-tabs to the tab widget
+        self.tab_widget.addTab(self.reports_tab, "Reports")  
+        self.tab_widget.addTab(self.transactions_tab, "Transactions")
+
+        # Set layouts for each sub-tab
+        self.initReportsTab()
+        self.initTransactionsTab()
+
+        self.layout.addWidget(self.tab_widget)
+
+    def initReportsTab(self):
+        layout = QtWidgets.QVBoxLayout(self.reports_tab)
+        self.reports_label = QtWidgets.QLabel("This is the Reports section.")
+        layout.addWidget(self.reports_label)
+
+    def initTransactionsTab(self):
+        layout = QtWidgets.QVBoxLayout(self.transactions_tab)
+        self.transactions_table = QtWidgets.QTableWidget()
+        self.transactions_table.setColumnCount(8)
+        self.transactions_table.setHorizontalHeaderLabels([
+            'ID', 'Quantity', 'Product Name', 'Date', 'Total Price', 
+            'Transaction ID', 'Product ID', 'Log ID'
+        ])
+        self.transactions_table.horizontalHeader().setStretchLastSection(True)
+        self.transactions_table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+
+        layout.addWidget(self.transactions_table)
+        self.load_transactions()
+
+    def load_transactions(self):
+        conn = sqlite3.connect('j7h.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT transaction_id, qty, product_name, date, total_price, transaction_id, product_id, log_id FROM transactions")
+        rows = cursor.fetchall()
+        self.transactions_table.setRowCount(len(rows))
+        for row_number, row_data in enumerate(rows):
+            for column_number, data in enumerate(row_data):
+                self.transactions_table.setItem(row_number, column_number, QtWidgets.QTableWidgetItem(str(data)))
+        conn.close()
 
 def main():
     import sys
