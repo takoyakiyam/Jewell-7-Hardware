@@ -519,8 +519,9 @@ class CartTab(QtWidgets.QWidget):
             if product_data:
                 product_name, brand, var, size, price = product_data
                 total_price = row[3]  # Assuming total_price is stored in cart table
-                cursor.execute("INSERT INTO transactions (transaction_id, product_name, brand, var, size, qty, total_price, date, product_id, log_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                            (None, product_name, brand, var, size, row[2], total_price, current_date, row[6], row[7]))
+                cursor.execute("INSERT INTO transactions (customer, product_name, brand, var, size, qty, total_price, date, product_id, log_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (None, product_name, brand, var, size, row[2], total_price, current_date, row[6], row[7]))
+
         cursor.execute("DELETE FROM cart")
         conn.commit()
         conn.close()
@@ -568,9 +569,9 @@ class ReportsTab(QtWidgets.QWidget):
         
         # Create the table widget
         self.transactions_table = QtWidgets.QTableWidget()
-        self.transactions_table.setColumnCount(8)
+        self.transactions_table.setColumnCount(9)  # Update column count to include 'Customer'
         self.transactions_table.setHorizontalHeaderLabels([
-            'ID', 'Quantity', 'Product Name', 'Date', 'Total Price', 
+            'ID', 'Customer', 'Quantity', 'Product Name', 'Date', 'Total Price', 
             'Transaction ID', 'Product ID', 'Log ID'
         ])
         self.transactions_table.horizontalHeader().setStretchLastSection(True)
@@ -585,16 +586,30 @@ class ReportsTab(QtWidgets.QWidget):
     def load_transactions(self):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
-        cursor.execute("""SELECT transactions.transaction_id, transactions.qty, transactions.date, transactions.total_price, 
-                            transactions.product_id, products.product_name, products.brand, products.var, products.size
+        cursor.execute("""SELECT transactions.transaction_id, transactions.customer, transactions.qty, transactions.date, transactions.total_price, 
+                            transactions.product_id, products.product_name, products.brand, products.var, products.size, transactions.log_id
                         FROM transactions
                         JOIN products ON transactions.product_id = products.product_id""")
         rows = cursor.fetchall()
-        print(rows)  # Print query results
         self.transactions_table.setRowCount(len(rows))
         for row_number, row_data in enumerate(rows):
             for column_number, data in enumerate(row_data):
-                self.transactions_table.setItem(row_number, column_number, QtWidgets.QTableWidgetItem(str(data)))
+                if column_number == 0:
+                    self.transactions_table.setItem(row_number, 0, QtWidgets.QTableWidgetItem(str(data)))
+                elif column_number == 1:
+                    self.transactions_table.setItem(row_number, 1, QtWidgets.QTableWidgetItem(str(data)))
+                elif column_number == 2:
+                    self.transactions_table.setItem(row_number, 2, QtWidgets.QTableWidgetItem(str(data)))
+                elif column_number == 5:
+                    self.transactions_table.setItem(row_number, 7, QtWidgets.QTableWidgetItem(str(data)))
+                elif column_number == 6:
+                    self.transactions_table.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(data)))
+                elif column_number == 7:
+                    self.transactions_table.setItem(row_number, 8, QtWidgets.QTableWidgetItem(str(data)))
+                elif column_number == 10:
+                    self.transactions_table.setItem(row_number, 9, QtWidgets.QTableWidgetItem(str(data)))
+                else:
+                    self.transactions_table.setItem(row_number, column_number + 3, QtWidgets.QTableWidgetItem(str(data)))
         conn.close()
 
 
