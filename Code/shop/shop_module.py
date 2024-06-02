@@ -492,26 +492,43 @@ class CartTab(QtWidgets.QWidget):
     def checkout(self):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
+        cursor.execute('''CREATE TABLE IF NOT EXISTS transactions (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            qty INTEGER,
+                            product_name TEXT,
+                            date TEXT,
+                            total_price NUMERIC,
+                            transaction_id INTEGER,
+                            product_id INTEGER,
+                            log_id INTEGER)''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS products (
+                            product_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            product_name TEXT,
+                            brand TEXT,
+                            var TEXT,
+                            size TEXT,
+                            qty INTEGER,
+                            price NUMERIC)''')
+
         cursor.execute("SELECT * FROM cart")
         rows = cursor.fetchall()
         for row in rows:
-            cursor.execute('''CREATE TABLE IF NOT EXISTS transactions (
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                qty INTEGER,
-                                product_name TEXT,
-                                date TEXT,
-                                total_price NUMERIC,
-                                transaction_id INTEGER,
-                                product_id INTEGER,
-                                user_id INTEGER,
-                                log_id INTEGER)''')
-            cursor.execute("INSERT INTO transactions (qty, product_name, date, total_price, transaction_id, product_id, user_id, log_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                           (row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]))
+            cursor.execute("SELECT product_id, price FROM products WHERE product_name = ?", (row[2],))
+            product_data = cursor.fetchone()
+            if product_data:
+                product_id, price = product_data
+                cursor.execute("INSERT INTO transactions (qty, product_name, date, total_price, transaction_id, product_id, log_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (row[1], row[2], row[3], row[4], row[5], product_id, row[7]))
+                cursor.execute("UPDATE products SET qty = qty - ?, price = ? WHERE product_id = ?", (row[1], price, product_id))
         cursor.execute("DELETE FROM cart")
         conn.commit()
         conn.close()
         self.load_cart_items()
         QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
+
+#Class for Products Tab
+class ProductsTab(QtWidgets.QWidget):
+   pass
 
 #Class for Reports Tab
 class ReportsTab(QtWidgets.QWidget):
@@ -561,13 +578,14 @@ class ReportsTab(QtWidgets.QWidget):
     def load_transactions(self):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT transaction_id, qty, product_name, date, total_price, transaction_id, product_id, log_id FROM transactions")
+        cursor.execute("SELECT qty, product_name, date, total_price, transaction_id, product_id, log_id FROM transactions")
         rows = cursor.fetchall()
         self.transactions_table.setRowCount(len(rows))
         for row_number, row_data in enumerate(rows):
             for column_number, data in enumerate(row_data):
                 self.transactions_table.setItem(row_number, column_number, QtWidgets.QTableWidgetItem(str(data)))
         conn.close()
+
 
 def main():
     import sys
