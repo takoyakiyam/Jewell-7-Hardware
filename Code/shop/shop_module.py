@@ -1,5 +1,5 @@
 import sqlite3
-import datetime
+from datetime import datetime
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QSpinBox, QPushButton
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -508,7 +508,7 @@ class CartTab(QtWidgets.QWidget):
                             log_id INTEGER)''')
 
         # Get current date
-        current_date = datetime.datetime.now().strftime('%Y-%m-%d')
+        current_date = datetime.now().strftime('%Y-%m-%d')
 
         cursor.execute("SELECT * FROM cart")
         rows = cursor.fetchall()
