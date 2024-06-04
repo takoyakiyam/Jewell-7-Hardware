@@ -206,16 +206,21 @@ class Ui_StaffRegistration(object):
 
     def register_user(self):
         # Fetching data from input fields
-        first_name = self.firstName_input.text()
-        last_name = self.lastName_input.text()
-        username = self.username_input.text()
-        password = self.password_input.text()
+        first_name = self.firstName_input.text().strip()
+        last_name = self.lastName_input.text().strip()
+        username = self.username_input.text().strip()
+        password = self.password_input.text().strip()
         birthdate = self.birthdate_edit.date().toString(QtCore.Qt.ISODate)
-        loa = self.loa_input.text()
+        loa = self.loa_input.text().strip()
 
-        # Validate input fields
-        if not first_name or not last_name or not username or not password:
-            self.show_error_message("All fields are required.")
+        # Validation: Check if any field is empty
+        if not all([first_name, last_name, username, password]):
+            # Displaying a message box for error
+            msg = QtWidgets.QMessageBox()
+            msg.setIcon(QtWidgets.QMessageBox.Warning)
+            msg.setText("Please fill in all the fields.")
+            msg.setWindowTitle("Error")
+            msg.exec_()
             return
 
         # Get the current date
