@@ -252,6 +252,13 @@ class Ui_AdminRegistration(object):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
 
+        # Check if username already exists
+        cursor.execute("SELECT username FROM users WHERE username=?", (username,))
+        if cursor.fetchone():
+            self.show_error_message("Username already exists. Please choose a different username.")
+            conn.close()
+            return
+
         # Inserting data into the users table
         cursor.execute('''INSERT INTO users (first_name, last_name, username, password, loa) 
                           VALUES (?, ?, ?, ?, ?)''', (first_name, last_name, username, password, loa))
