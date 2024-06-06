@@ -1,7 +1,3 @@
-import sys
-import sqlite3
-from datetime import datetime
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QSpinBox, QPushButton, QWidget
 from PyQt5 import QtCore, QtGui, QtWidgets
 from shop import ShopTab
 from cart import CartTab
