@@ -1,4 +1,5 @@
 import sys
+import sqlite3
 from datetime import datetime
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QSpinBox, QPushButton, QWidget
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -6,10 +7,6 @@ from shop import ShopTab
 from cart import CartTab
 from productManagement import ProductsTab
 from reports import ReportsTab
-
-class ShopTab(QWidget):
-    def __init__(self, *args, **kwargs):
-        QWidget.__init__(self, *args, **kwargs)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -180,6 +177,7 @@ class Ui_MainWindow(object):
         self.analytics_button.setText(_translate("MainWindow", "Analytics"))
         self.returns_button.setText(_translate("MainWindow", "Returns"))
 
+# Navigation Functions
 
     def open_shop(self):
         self.shop_tab = ShopTab()
