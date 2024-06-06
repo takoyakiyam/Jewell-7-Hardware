@@ -7,6 +7,7 @@ from shop import ShopTab
 from cart import CartTab
 from productManagement import ProductsTab
 from reports import ReportsTab
+from users import UsersTab
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -201,7 +202,9 @@ class Ui_MainWindow(object):
         self.stackedWidget.setCurrentWidget(self.products_tab)
 
     def open_users(self):
-        pass
+        self.users_tab = UsersTab()
+        self.stackedWidget.addWidget(self.users_tab)
+        self.stackedWidget.setCurrentWidget(self.users_tab)
 
     def open_reports(self):
         self.reports_tab = ReportsTab()
