@@ -66,15 +66,30 @@ class CartTab(QtWidgets.QWidget):
     def load_cart_items(self):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT product_name, qty, total_price FROM cart")
+
+        # Join the 'cart' and 'products' tables to retrieve product price
+        cursor.execute("""
+            SELECT c.product_name, c.qty, p.price AS price
+            FROM cart c
+            INNER JOIN products p ON c.product_name = p.product_name
+        """)
         rows = cursor.fetchall()
+
         self.cart_table.setRowCount(len(rows))
         for row_number, row_data in enumerate(rows):
-            self.cart_table.setItem(row_number, 0, QtWidgets.QTableWidgetItem(str(row_data[0])))  # Product Name
-            self.cart_table.setItem(row_number, 1, QtWidgets.QTableWidgetItem(str(row_data[1])))  # Quantity
-            self.cart_table.setItem(row_number, 2, QtWidgets.QTableWidgetItem(str(row_data[2])))  # Price
-            self.cart_table.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(row_data[2])))  # Total
+            product_name = str(row_data[0])
+            quantity = int(row_data[1])
+            price = float(row_data[2])  # Access price from the joined 'products' table
+            total_price = quantity * price
+
+            self.cart_table.setItem(row_number, 0, QtWidgets.QTableWidgetItem(product_name))  # Product Name
+            self.cart_table.setItem(row_number, 1, QtWidgets.QTableWidgetItem(str(quantity)))  # Quantity
+            self.cart_table.setItem(row_number, 2, QtWidgets.QTableWidgetItem(str(price)))  # Price
+            self.cart_table.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(total_price)))  # Total
+
         conn.close()
+
+
 
     def search_products(self):
         search_query = self.lineEdit.text()
@@ -166,7 +181,7 @@ class CartTab(QtWidgets.QWidget):
             product_data = cursor.fetchone()
             if product_data:
                 product_name, brand, var, size, price = product_data
-                total_price = row[3]  # Assuming total_price is stored in cart table
+                total_price = row[3] * price  
                 cursor.execute("INSERT INTO transactions (customer, product_name, brand, var, size, qty, total_price, date, product_id, log_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (None, product_name, brand, var, size, row[2], total_price, current_date, row[6], row[7]))
 
