@@ -39,9 +39,11 @@ class ShopTab(QtWidgets.QWidget):
         for row_number, row_data in enumerate(rows):
             self.tableWidget.setItem(row_number, 0, QtWidgets.QTableWidgetItem(str(row_data[1])))  # product
             self.tableWidget.setItem(row_number, 1, QtWidgets.QTableWidgetItem(str(row_data[2])))  # brand
-            self.tableWidget.setItem(row_number, 2, QtWidgets.QTableWidgetItem(str(row_data[5])))  # price
+            self.tableWidget.setItem(row_number, 2, QtWidgets.QTableWidgetItem(str(row_data[3])))  # var
+            self.tableWidget.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(row_data[4])))  # size
+            self.tableWidget.setItem(row_number, 4, QtWidgets.QTableWidgetItem(str(row_data[5])))  # price
             qty = row_data[6]  # qty
-            self.tableWidget.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(qty)))  # Convert qty to string before setting it as text
+            self.tableWidget.setItem(row_number, 5, QtWidgets.QTableWidgetItem(str(qty)))  # Convert qty to string before setting it as text
         conn.close()
 
     def search_products(self):
@@ -64,8 +66,8 @@ class ShopTab(QtWidgets.QWidget):
         self.layout = QtWidgets.QVBoxLayout(self)
 
         self.tableWidget = QtWidgets.QTableWidget()
-        self.tableWidget.setColumnCount(4)
-        self.tableWidget.setHorizontalHeaderLabels(['Product', 'Brand', 'Price', 'Items in Stock'])
+        self.tableWidget.setColumnCount(6)
+        self.tableWidget.setHorizontalHeaderLabels(['Product', 'Brand', 'Variation', 'Size', 'Price', 'Items in Stock'])
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
