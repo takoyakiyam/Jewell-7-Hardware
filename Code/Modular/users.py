@@ -9,7 +9,6 @@ class UsersTab(QtWidgets.QWidget):
     
     def __init__(self, parent=None):
         super(UsersTab, self).__init__(parent)
-        
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
         
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
@@ -60,7 +59,7 @@ class UsersTab(QtWidgets.QWidget):
         self.horizontalLayout_4.addWidget(self.scrollArea)
 
         self.verticalLayout.addLayout(self.horizontalLayout_4)
-        
+        self.tableWidget.itemSelectionChanged.connect(self.on_selection_changed)
         self.load_data()
 
     def load_data(self, search_query=None):
@@ -88,6 +87,16 @@ class UsersTab(QtWidgets.QWidget):
         conn.close()
 
         self.tableWidget.setColumnHidden(0, True)
+
+    def on_selection_changed(self):
+        selected_rows = set()
+        for item in self.tableWidget.selectedItems():
+            selected_rows.add(item.row())
+        for row in selected_rows:
+            for column in range(self.tableWidget.columnCount()):
+                item = self.tableWidget.item(row, column)
+                if item:
+                    item.setSelected(True)
 
     def resize_table(self):
         header = self.tableWidget.horizontalHeader()
