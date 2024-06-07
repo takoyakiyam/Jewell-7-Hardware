@@ -9,6 +9,8 @@ class ProductsTab(QtWidgets.QWidget):
         super().__init__(parent)
         self.setup_ui()
         self.load_data()
+        self.tableWidget.itemSelectionChanged.connect(self.on_selection_changed)
+
 
     def setup_ui(self):
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
@@ -117,6 +119,16 @@ class ProductsTab(QtWidgets.QWidget):
         self.tableWidget.setColumnHidden(0, True)
         self.highlight_qty_cells()
 
+    def on_selection_changed(self):
+        selected_rows = set()
+        for item in self.tableWidget.selectedItems():
+            selected_rows.add(item.row())
+        for row in selected_rows:
+            for column in range(self.tableWidget.columnCount()):
+                item = self.tableWidget.item(row, column)
+                if item:
+                    item.setSelected(True)
+
     def resize_table(self):
         header = self.tableWidget.horizontalHeader()
         for i in range(1, self.tableWidget.columnCount() - 1):
@@ -176,7 +188,7 @@ class ProductsTab(QtWidgets.QWidget):
 class AddProductDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Add Product")
+        self.setWindowTitle("Product Management")
         self.setGeometry(100, 100, 300, 200)
         layout = QtWidgets.QVBoxLayout()
 
@@ -215,7 +227,7 @@ class AddProductDialog(QtWidgets.QDialog):
         layout.addWidget(self.add_button)
 
         self.setLayout(layout)
-
+        
     def add_product(self):
         product_name = self.product_name_input.text()
         brand = self.brand_input.text()
