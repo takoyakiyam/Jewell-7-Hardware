@@ -20,13 +20,12 @@ class AddToCartDialog(QDialog):
 
     def get_quantity(self):
         return self.spin_box.value()
-    
-#Class for Cart Tab
+
 class CartTab(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
-        
+
     def initUI(self):
         self.setWindowTitle('Cart')
         self.setGeometry(100, 100, 800, 600)
@@ -34,8 +33,8 @@ class CartTab(QtWidgets.QWidget):
 
         # Create a table to display cart items
         self.cart_table = QtWidgets.QTableWidget()
-        self.cart_table.setColumnCount(4)
-        self.cart_table.setHorizontalHeaderLabels(['Product', 'Quantity', 'Price', 'Total'])
+        self.cart_table.setColumnCount(7)
+        self.cart_table.setHorizontalHeaderLabels(['Product', 'Brand', 'Variation', 'Size', 'Quantity', 'Price', 'Total'])
         self.cart_table.horizontalHeader().setStretchLastSection(True)
         self.cart_table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
@@ -47,18 +46,16 @@ class CartTab(QtWidgets.QWidget):
         self.clear_button = QtWidgets.QPushButton("Clear Cart")
         self.checkout_button = QtWidgets.QPushButton("Checkout")
 
-
         self.layout.addWidget(self.remove_button)
         self.layout.addWidget(self.update_button)
         self.layout.addWidget(self.clear_button)
         self.layout.addWidget(self.checkout_button)
-        
+
         # Connect buttons to methods
         self.remove_button.clicked.connect(self.remove_item)
         self.update_button.clicked.connect(self.update_quantity)
-        self.clear_button.clicked.connect(self.clear_cart) 
+        self.clear_button.clicked.connect(self.clear_cart)
         self.checkout_button.clicked.connect(self.checkout)
-        
 
         # Connect itemSelectionChanged signal to handle row selection
         self.cart_table.itemSelectionChanged.connect(self.on_selection_changed)
@@ -67,9 +64,9 @@ class CartTab(QtWidgets.QWidget):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
 
-        # Join the 'cart' and 'products' tables to retrieve product price
+        # Join the 'cart' and 'products' tables to retrieve all necessary fields
         cursor.execute("""
-            SELECT c.product_name, c.qty, p.price AS price
+            SELECT c.product_name, c.qty, c.brand, c.var, c.size, p.price, (c.qty * p.price) AS total_price
             FROM cart c
             INNER JOIN products p ON c.product_name = p.product_name
         """)
@@ -79,21 +76,21 @@ class CartTab(QtWidgets.QWidget):
         for row_number, row_data in enumerate(rows):
             product_name = str(row_data[0])
             quantity = int(row_data[1])
-            price = float(row_data[2])  # Access price from the joined 'products' table
-            total_price = quantity * price
+            brand = str(row_data[2])
+            var = str(row_data[3])
+            size = str(row_data[4])
+            price = float(row_data[5])
+            total_price = float(row_data[6])
 
             self.cart_table.setItem(row_number, 0, QtWidgets.QTableWidgetItem(product_name))  # Product Name
-            self.cart_table.setItem(row_number, 1, QtWidgets.QTableWidgetItem(str(quantity)))  # Quantity
-            self.cart_table.setItem(row_number, 2, QtWidgets.QTableWidgetItem(str(price)))  # Price
-            self.cart_table.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(total_price)))  # Total
+            self.cart_table.setItem(row_number, 1, QtWidgets.QTableWidgetItem(brand))  # Brand
+            self.cart_table.setItem(row_number, 2, QtWidgets.QTableWidgetItem(var))  # Variation
+            self.cart_table.setItem(row_number, 3, QtWidgets.QTableWidgetItem(size))  # Size
+            self.cart_table.setItem(row_number, 4, QtWidgets.QTableWidgetItem(str(quantity)))  # Quantity
+            self.cart_table.setItem(row_number, 5, QtWidgets.QTableWidgetItem(str(price)))  # Price
+            self.cart_table.setItem(row_number, 6, QtWidgets.QTableWidgetItem(str(total_price)))  # Total
 
         conn.close()
-
-
-
-    def search_products(self):
-        search_query = self.lineEdit.text()
-        self.load_data(search_query)
 
     def on_selection_changed(self):
         selected_rows = set()
@@ -132,7 +129,7 @@ class CartTab(QtWidgets.QWidget):
                 cursor = conn.cursor()
                 for row in selected_rows:
                     product_item = self.cart_table.item(row, 0)
-                    price_item = self.cart_table.item(row, 2)
+                    price_item = self.cart_table.item(row, 5)
                     if product_item is not None and price_item is not None:
                         product_name = product_item.text()
                         price = float(price_item.text())
@@ -171,19 +168,20 @@ class CartTab(QtWidgets.QWidget):
                             log_id INTEGER)''')
 
         # Get current date
-        current_date = datetime.now().strftime('%Y-%m-%d')
+        current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         cursor.execute("SELECT * FROM cart")
         rows = cursor.fetchall()
         for row in rows:
-            # Fetch additional details from the products table based on product_id
-            cursor.execute("SELECT product_name, brand, var, size, price FROM products WHERE product_id = ?", (row[6],))
-            product_data = cursor.fetchone()
-            if product_data:
-                product_name, brand, var, size, price = product_data
-                total_price = row[3] * price  
-                cursor.execute("INSERT INTO transactions (customer, product_name, brand, var, size, qty, total_price, date, product_id, log_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (None, product_name, brand, var, size, row[2], total_price, current_date, row[6], row[7]))
+            product_name, qty, brand, var, size, price, total_price = row
+            customer = "Default Customer"  # Replace with actual customer logic
+            transaction_type = "Purchase"  # Replace with actual transaction type logic
+            product_id = 1  # Replace with actual product ID retrieval logic
+            log_id = 1  # Replace with actual log ID retrieval logic
+
+            cursor.execute('''INSERT INTO transactions (customer, product_name, brand, var, size, qty, total_price, date, type, product_id, log_id)
+                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                           (customer, product_name, brand, var, size, qty, total_price, current_date, transaction_type, product_id, log_id))
 
         cursor.execute("DELETE FROM cart")
         conn.commit()
