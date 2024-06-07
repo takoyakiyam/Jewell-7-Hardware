@@ -1,8 +1,25 @@
 import sqlite3
 from datetime import datetime
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QSpinBox, QPushButton
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QSpinBox, QPushButton, QLineEdit
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+class CustomerNameDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Customer Name")
+        self.layout = QVBoxLayout()
+        self.label = QLabel("Enter customer name:")
+        self.layout.addWidget(self.label)
+        self.line_edit = QLineEdit()
+        self.layout.addWidget(self.line_edit)
+        self.ok_button = QPushButton("OK")
+        self.ok_button.clicked.connect(self.accept)
+        self.layout.addWidget(self.ok_button)
+        self.setLayout(self.layout)
+
+    def get_customer_name(self):
+        return self.line_edit.text()
+    
 class AddToCartDialog(QDialog):
     def __init__(self, parent=None, max_quantity=10):
         super().__init__(parent)
@@ -149,50 +166,53 @@ class CartTab(QtWidgets.QWidget):
         QtWidgets.QMessageBox.information(self, "Clear Cart", "All items have been removed from the cart.")
 
     def checkout(self):
-        # Get current date
-        current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        # Prompt user for customer name
+        customer_dialog = CustomerNameDialog()
+        if customer_dialog.exec_() == QDialog.Accepted:
+            customer_name = customer_dialog.get_customer_name()
 
-        # Iterate over rows in the cart table
-        for row in range(self.cart_table.rowCount()):
-            product_name_item = self.cart_table.item(row, 0)
-            qty_item = self.cart_table.item(row, 4)
-            price_item = self.cart_table.item(row, 5)
-            total_price_item = self.cart_table.item(row, 6)
-            brand_item = self.cart_table.item(row, 1)
-            var_item = self.cart_table.item(row, 2)
-            size_item = self.cart_table.item(row, 3)
+            # Get current date
+            current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-            # Extract data from table items
-            if all(item is not None for item in [product_name_item, qty_item, price_item, total_price_item, brand_item, var_item, size_item]):
-                product_name = product_name_item.text()
-                qty = int(qty_item.text())
-                price = float(price_item.text())
-                total_price = float(total_price_item.text())
-                brand = brand_item.text()
-                var = var_item.text()
-                size = size_item.text()
+            # Iterate over rows in the cart table
+            for row in range(self.cart_table.rowCount()):
+                product_name_item = self.cart_table.item(row, 0)
+                qty_item = self.cart_table.item(row, 4)
+                price_item = self.cart_table.item(row, 5)
+                total_price_item = self.cart_table.item(row, 6)
+                brand_item = self.cart_table.item(row, 1)
+                var_item = self.cart_table.item(row, 2)
+                size_item = self.cart_table.item(row, 3)
 
-                # Replace with actual customer logic
-                customer = "Default Customer"
-                # Replace with actual transaction type logic
-                transaction_type = "Purchase"
-                # Replace with actual product ID retrieval logic
-                product_id = 1
-                # Replace with actual log ID retrieval logic
-                log_id = 1
+                # Extract data from table items
+                if all(item is not None for item in [product_name_item, qty_item, price_item, total_price_item, brand_item, var_item, size_item]):
+                    product_name = product_name_item.text()
+                    qty = int(qty_item.text())
+                    price = float(price_item.text())
+                    total_price = float(total_price_item.text())
+                    brand = brand_item.text()
+                    var = var_item.text()
+                    size = size_item.text()
 
-                # Insert into transactions table
-                conn = sqlite3.connect('j7h.db')
-                cursor = conn.cursor()
-                cursor.execute('''INSERT INTO transactions (customer, product_name, qty, total_price, date, type, product_id, log_id, brand, var, size)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                            (customer, product_name, qty, total_price, current_date, transaction_type, product_id, log_id, brand, var, size))
-                conn.commit()
-                conn.close()
+                    # Replace with actual transaction type logic
+                    transaction_type = "Purchase"
+                    # Replace with actual product ID retrieval logic
+                    product_id = 1
+                    # Replace with actual log ID retrieval logic
+                    log_id = 1
 
-        # Clear cart table
-        self.clear_cart()
+                    # Insert into transactions table
+                    conn = sqlite3.connect('j7h.db')
+                    cursor = conn.cursor()
+                    cursor.execute('''INSERT INTO transactions (customer, product_name, qty, total_price, date, type, product_id, log_id, brand, var, size)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                                (customer_name, product_name, qty, total_price, current_date, transaction_type, product_id, log_id, brand, var, size))
+                    conn.commit()
+                    conn.close()
 
-        # Display success message
-        QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
+            # Clear cart table
+            self.clear_cart()
+
+            # Display success message
+            QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
 
