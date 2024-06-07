@@ -149,42 +149,50 @@ class CartTab(QtWidgets.QWidget):
         QtWidgets.QMessageBox.information(self, "Clear Cart", "All items have been removed from the cart.")
 
     def checkout(self):
-        conn = sqlite3.connect('j7h.db')
-        cursor = conn.cursor()
-
-        # Create transactions table if it doesn't exist
-        cursor.execute('''CREATE TABLE IF NOT EXISTS transactions (
-                            transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            customer TEXT,
-                            product_name TEXT,
-                            brand TEXT,
-                            var TEXT,
-                            size TEXT,
-                            qty INTEGER,
-                            total_price NUMERIC,
-                            date TEXT,
-                            type TEXT,
-                            product_id INTEGER,
-                            log_id INTEGER)''')
-
         # Get current date
         current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        cursor.execute("SELECT * FROM cart")
-        rows = cursor.fetchall()
-        for row in rows:
-            product_name, qty, brand, var, size, price, total_price = row
-            customer = "Default Customer"  # Replace with actual customer logic
-            transaction_type = "Purchase"  # Replace with actual transaction type logic
-            product_id = 1  # Replace with actual product ID retrieval logic
-            log_id = 1  # Replace with actual log ID retrieval logic
+        # Iterate over rows in the cart table
+        for row in range(self.cart_table.rowCount()):
+            product_name_item = self.cart_table.item(row, 0)
+            qty_item = self.cart_table.item(row, 4)
+            price_item = self.cart_table.item(row, 5)
+            total_price_item = self.cart_table.item(row, 6)
+            brand_item = self.cart_table.item(row, 1)
+            var_item = self.cart_table.item(row, 2)
+            size_item = self.cart_table.item(row, 3)
 
-            cursor.execute('''INSERT INTO transactions (customer, product_name, brand, var, size, qty, total_price, date, type, product_id, log_id)
-                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                           (customer, product_name, brand, var, size, qty, total_price, current_date, transaction_type, product_id, log_id))
+            # Extract data from table items
+            if all(item is not None for item in [product_name_item, qty_item, price_item, total_price_item, brand_item, var_item, size_item]):
+                product_name = product_name_item.text()
+                qty = int(qty_item.text())
+                price = float(price_item.text())
+                total_price = float(total_price_item.text())
+                brand = brand_item.text()
+                var = var_item.text()
+                size = size_item.text()
 
-        cursor.execute("DELETE FROM cart")
-        conn.commit()
-        conn.close()
-        self.load_cart_items()
+                # Replace with actual customer logic
+                customer = "Default Customer"
+                # Replace with actual transaction type logic
+                transaction_type = "Purchase"
+                # Replace with actual product ID retrieval logic
+                product_id = 1
+                # Replace with actual log ID retrieval logic
+                log_id = 1
+
+                # Insert into transactions table
+                conn = sqlite3.connect('j7h.db')
+                cursor = conn.cursor()
+                cursor.execute('''INSERT INTO transactions (customer, product_name, qty, total_price, date, type, product_id, log_id, brand, var, size)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                            (customer, product_name, qty, total_price, current_date, transaction_type, product_id, log_id, brand, var, size))
+                conn.commit()
+                conn.close()
+
+        # Clear cart table
+        self.clear_cart()
+
+        # Display success message
         QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
+
