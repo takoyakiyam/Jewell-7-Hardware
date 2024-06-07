@@ -39,10 +39,10 @@ class ReportsTab(QtWidgets.QWidget):
         
         # Create the table widget
         self.transactions_table = QtWidgets.QTableWidget()
-        self.transactions_table.setColumnCount(9)  # Update column count to include 'Customer'
+        self.transactions_table.setColumnCount(10)  # Update column count to match the number of columns
         self.transactions_table.setHorizontalHeaderLabels([
-            'ID', 'Customer', 'Quantity', 'Product Name', 'Date', 'Total Price', 
-            'Transaction ID', 'Product ID', 'Log ID'
+            'Transaction ID', 'Customer', 'Quantity', 'Date and Time', 'Total Price', 'Product ID', 'Product Name', 
+            'Brand', 'Size', 'Variation'
         ])
         self.transactions_table.horizontalHeader().setStretchLastSection(True)
         self.transactions_table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -57,27 +57,18 @@ class ReportsTab(QtWidgets.QWidget):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
         cursor.execute("""SELECT transactions.transaction_id, transactions.customer, transactions.qty, transactions.date, transactions.total_price, 
-                            transactions.product_id, products.product_name, products.brand, products.var, products.size, transactions.log_id
+                            transactions.product_id, products.product_name, products.brand, products.size, products.var, transactions.log_id
                         FROM transactions
                         JOIN products ON transactions.product_id = products.product_id""")
         rows = cursor.fetchall()
+
+        # Set the number of rows in the table
         self.transactions_table.setRowCount(len(rows))
+
+        # Populate the table with transaction data
         for row_number, row_data in enumerate(rows):
             for column_number, data in enumerate(row_data):
-                if column_number == 0:
-                    self.transactions_table.setItem(row_number, 0, QtWidgets.QTableWidgetItem(str(data)))
-                elif column_number == 1:
-                    self.transactions_table.setItem(row_number, 1, QtWidgets.QTableWidgetItem(str(data)))
-                elif column_number == 2:
-                    self.transactions_table.setItem(row_number, 2, QtWidgets.QTableWidgetItem(str(data)))
-                elif column_number == 5:
-                    self.transactions_table.setItem(row_number, 7, QtWidgets.QTableWidgetItem(str(data)))
-                elif column_number == 6:
-                    self.transactions_table.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(data)))
-                elif column_number == 7:
-                    self.transactions_table.setItem(row_number, 8, QtWidgets.QTableWidgetItem(str(data)))
-                elif column_number == 10:
-                    self.transactions_table.setItem(row_number, 9, QtWidgets.QTableWidgetItem(str(data)))
-                else:
-                    self.transactions_table.setItem(row_number, column_number + 3, QtWidgets.QTableWidgetItem(str(data)))
+                self.transactions_table.setItem(row_number, column_number, QtWidgets.QTableWidgetItem(str(data)))
+
         conn.close()
+
