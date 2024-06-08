@@ -86,7 +86,6 @@ class Ui_Login(QtWidgets.QMainWindow):
         self.loginButton.setDefault(True)
         self.loginButton.setFlat(False)
         self.loginButton.setObjectName("loginButton")
-        # Connect the "Login" button to the login_user method
         self.loginButton.clicked.connect(self.login_user)
         self.horizontalLayout.addWidget(self.loginButton)
         self.forgotButton = QtWidgets.QPushButton(self.gridLayoutWidget)
@@ -116,7 +115,7 @@ class Ui_Login(QtWidgets.QMainWindow):
 
     def retranslateUi(self, Login):
         _translate = QtCore.QCoreApplication.translate
-        Login.setWindowTitle(_translate("Login", "MainWindow"))
+        Login.setWindowTitle(_translate("Login", "Login"))
         self.Jewell7_label.setText(_translate("Login", "Jewell 7 "))
         self.Hardware_label.setText(_translate("Login", "Hardware"))
         self.username_label.setText(_translate("Login", "Username:"))
@@ -128,56 +127,46 @@ class Ui_Login(QtWidgets.QMainWindow):
         username = self.username_input.text().strip()
         password = self.password_input.text().strip()
 
-        # Validation: Check if any field is empty
         if not all([username, password]):
             self.show_error_message("Please fill in all the fields.")
             return
 
-        # Establishing connection with SQLite database
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
 
         try:
-            # SQL query to check if the username exists and retrieve user_id and password
             query = "SELECT user_id, password FROM users WHERE username = ?"
             cursor.execute(query, (username,))
             result = cursor.fetchone()
         
-            # Check if the query returned a result
             if result is None:
                 self.show_error_message("Invalid username or password.")
                 return
 
-            # If username exists, check if password matches
             user_id, stored_password = result
             if stored_password == password:
-                # Get the current date and time
                 current_datetime = datetime.today()
                 date_log = current_datetime.strftime('%Y-%m-%d')
                 time_log = current_datetime.strftime("%I:%M %p")
 
-                # Inserting data into the user_logs table
                 action = "login"
                 cursor.execute('''INSERT INTO user_logs (user_id, action, time, date) 
                               VALUES (?, ?, ?, ?)''', (user_id, action, time_log, date_log))
                 conn.commit()
 
-                # Display success message
                 msg = QtWidgets.QMessageBox()
                 msg.setIcon(QtWidgets.QMessageBox.Information)
                 msg.setText("User Logged In Successfully!")
                 msg.setWindowTitle("Success")
                 msg.exec_()
 
-                # Open the main window
-                self.open_main_window(Login)
+                self.open_main_window()
 
             else:
                 self.show_error_message("Invalid username or password.")
         except sqlite3.Error as e:
             self.show_error_message(f"Database error: {e}")
         finally:
-            # Closing connection
             conn.close()
 
     def show_error_message(self, message):
@@ -187,16 +176,16 @@ class Ui_Login(QtWidgets.QMainWindow):
         msg.setWindowTitle("Error")
         msg.exec_()
 
-    def open_main_window(self, login_window):
-        main_window = QtWidgets.QMainWindow()
-        ui = Ui_MainWindow()
-        ui.setupUi(main_window)
-        main_window.show()
+    def open_main_window(self):
+        self.main_window = QtWidgets.QMainWindow()
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self.main_window)
+        self.main_window.show()
 
-        login_window.close()
+        self.close()
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    Login = Ui_Login()
-    Login.show()
+    login_window = Ui_Login()
+    login_window.show()
     sys.exit(app.exec_())
