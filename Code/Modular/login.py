@@ -3,6 +3,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from datetime import datetime
 import sqlite3
 from main import Ui_MainWindow
+from forgotPassword import Ui_ForgotPassword  # Import the ForgotPassword class
 
 class Ui_Login(QtWidgets.QMainWindow):
     def __init__(self):
@@ -98,6 +99,7 @@ class Ui_Login(QtWidgets.QMainWindow):
 "")
         self.forgotButton.setDefault(True)
         self.forgotButton.setObjectName("forgotButton")
+        self.forgotButton.clicked.connect(self.open_forgot_password)  # Connect the forgot button to the forgot password window
         self.horizontalLayout.addWidget(self.forgotButton)
         self.verticalLayout.addLayout(self.horizontalLayout)
         self.gridLayout.addLayout(self.verticalLayout, 0, 0, 1, 1)
@@ -183,6 +185,12 @@ class Ui_Login(QtWidgets.QMainWindow):
         self.main_window.show()
 
         self.close()
+
+    def open_forgot_password(self):
+        self.forgot_password_window = QtWidgets.QMainWindow()
+        self.ui = Ui_ForgotPassword()
+        self.ui.setupUi(self.forgot_password_window)
+        self.forgot_password_window.show()
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
