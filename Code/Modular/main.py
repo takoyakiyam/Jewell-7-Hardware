@@ -174,8 +174,7 @@ class Ui_MainWindow(object):
         self.analytics_button.setText(_translate("MainWindow", "Analytics"))
         self.returns_button.setText(_translate("MainWindow", "Returns"))
 
-# Navigation Functions
-
+    # Navigation Functions
     def open_shop(self):
         self.shop_tab = ShopTab()
         self.stackedWidget.addWidget(self.shop_tab)
@@ -186,11 +185,6 @@ class Ui_MainWindow(object):
         self.cart_tab = CartTab()
         self.stackedWidget.addWidget(self.cart_tab)
         self.stackedWidget.setCurrentWidget(self.cart_tab)
-        self.update_cart_tab()
-
-    def update_cart_tab(self):
-        if hasattr(self, 'cart_tab'):
-            self.cart_tab.load_cart_items()
 
     def open_products(self):
         self.products_tab = ProductsTab()
@@ -208,19 +202,23 @@ class Ui_MainWindow(object):
         self.stackedWidget.setCurrentWidget(self.reports_tab)
 
     def open_analytics(self):
-        pass
+        pass  # Implement this function
 
     def open_returns(self):
-        pass
+        pass  # Implement this function
 
-def main():
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
+    def update_cart_tab(self):
+        self.cart_tab.refresh_cart()
 
 if __name__ == "__main__":
-    main()
+    import sys
+    from login import Ui_Login
+
+    app = QtWidgets.QApplication(sys.argv)
+
+    # Create and show the login window
+    login_window = Ui_Login()
+    login_window.show()
+
+    # Start the application event loop
+    sys.exit(app.exec_())
