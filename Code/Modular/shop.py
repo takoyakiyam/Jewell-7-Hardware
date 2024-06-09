@@ -3,7 +3,6 @@ from datetime import datetime
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QSpinBox, QPushButton
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class AddToCartDialog(QDialog):
     def __init__(self, parent=None, max_quantity=10):
         super().__init__(parent)
@@ -21,7 +20,6 @@ class AddToCartDialog(QDialog):
 
     def get_quantity(self):
         return self.spin_box.value()
-
 
 class ShopTab(QtWidgets.QWidget):
     item_added_to_cart = QtCore.pyqtSignal()
@@ -98,79 +96,81 @@ class ShopTab(QtWidgets.QWidget):
         self.tableWidget.itemSelectionChanged.connect(self.on_selection_changed)
 
     def add_to_cart(self, quantity):
-        selected_rows = set()
-        for item in self.tableWidget.selectedItems():
-            selected_rows.add(item.row())
+        selected_rows = self.tableWidget.selectionModel().selectedRows()
         for row in selected_rows:
-            product_item = self.tableWidget.item(row, 0)  # Product name
-            brand_item = self.tableWidget.item(row, 1)  # Brand
-            var_item = self.tableWidget.item(row, 2)  # Variation
-            size_item = self.tableWidget.item(row, 3)  # Size
-            price_item = self.tableWidget.item(row, 4)  # Price
-            qty_item = self.tableWidget.item(row, 5)  # Items in stock
+            product_item = self.tableWidget.item(row.row(), 0)  # Product name
+            brand_item = self.tableWidget.item(row.row(), 1)  # Brand
+            var_item = self.tableWidget.item(row.row(), 2)  # Variation
+            size_item = self.tableWidget.item(row.row(), 3)  # Size
+            price_item = self.tableWidget.item(row.row(), 4)  # Price
+            qty_item = self.tableWidget.item(row.row(), 5)  # Items in stock
 
-            if qty_item is not None and product_item is not None and price_item is not None:
-                try:
-                    current_qty = float(qty_item.text())
-                    new_qty = current_qty - quantity
-                    if new_qty >= 0:
-                        qty_item.setText(str(int(new_qty)))
+            if not all([product_item, qty_item, price_item]):
+                QtWidgets.QMessageBox.warning(self, "Error", "One or more fields are missing!")
+                continue
 
-                        conn = sqlite3.connect('j7h.db')
-                        cursor = conn.cursor()
-                        cursor.execute('''CREATE TABLE IF NOT EXISTS cart (
-                                            cart_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                            product_name TEXT,
-                                            qty INTEGER,
-                                            total_price NUMERIC,
-                                            date TEXT,
-                                            transaction_id INTEGER,
-                                            product_id INTEGER,
-                                            log_id INTEGER,
-                                            brand TEXT,
-                                            var TEXT,
-                                            size TEXT)''')
-                        
-                        # Update product quantity in the database
-                        cursor.execute("UPDATE products SET qty =? WHERE product_name =?", (new_qty, product_item.text()))
+            product_name = product_item.text()
+            brand = brand_item.text() if brand_item else None
+            var = var_item.text() if var_item else None
+            size = size_item.text() if size_item else None
+            price_text = price_item.text()
+            qty_text = qty_item.text()
 
-                        product_name = product_item.text()
-                        brand = brand_item.text()
-                        var = var_item.text()
-                        size = size_item.text()
-                        price = float(price_item.text())
-                        total_price = quantity * price
-                        user_id = 1  # Replace with actual user ID retrieval logic
-                        log_id = 1  # Replace with actual log ID retrieval logic
-                        transaction_id = 1  # Replace with actual transaction ID logic
-                        date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            if not all([product_name, price_text, qty_text]):
+                QtWidgets.QMessageBox.warning(self, "Error", "One or more fields have empty values!")
+                continue
 
-                        # Retrieve product ID from products table
-                        cursor.execute("SELECT product_id FROM products WHERE product_name =? AND brand =? AND var =? AND size =?", 
-                                    (product_name, brand, var, size))
-                        product_id_result = cursor.fetchone()
-                        if product_id_result:
-                            product_id = product_id_result[0]
-                        else:
-                            QtWidgets.QMessageBox.warning(self, "Error", "Product ID not found!")
-                            conn.close()
-                            return
+            try:
+                current_qty = float(qty_text)
+                price = float(price_text)
+                new_qty = current_qty - quantity
+                if new_qty >= 0:
+                    qty_item.setText(str(int(new_qty)))
 
+                    conn = sqlite3.connect('j7h.db')
+                    cursor = conn.cursor()
+
+                    # Update product quantity in the database
+                    cursor.execute("UPDATE products SET qty = ? WHERE product_name = ?", (new_qty, product_name))
+
+                    total_price = quantity * price
+                    user_id = 1  # Replace with actual user ID retrieval logic
+                    log_id = 1  # Replace with actual log ID retrieval logic
+                    transaction_id = 1  # Replace with actual transaction ID logic
+                    date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+                    # Retrieve product ID from products table
+                    cursor.execute("""SELECT product_id FROM products 
+                                  WHERE product_name = ? 
+                                  AND (brand = ? OR brand IS NULL) 
+                                  AND (var = ? OR var IS NULL) 
+                                  AND (size = ? OR size IS NULL)""",
+                               (product_name, brand, var, size))
+                    product_id_result = cursor.fetchone()
+
+                    if product_id_result:
+                        product_id = product_id_result[0]
+                
                         cursor.execute('''INSERT INTO cart (product_name, qty, total_price, date, transaction_id, product_id, log_id, brand, var, size)
-                                        VALUES (?,?,?,?,?,?,?,?,?,?)''',
-                                    (product_name, quantity, total_price, date, transaction_id, product_id, log_id, brand, var, size))
+                                      VALUES (?,?,?,?,?,?,?,?,?,?)''',
+                                   (product_name, quantity, total_price, date, transaction_id, product_id, log_id, brand, var, size))
 
                         conn.commit()
 
                         if new_qty == 0:
-                            self.tableWidget.removeRow(row)
-                        conn.close()
-
+                            self.tableWidget.removeRow(row.row())
+                
                         self.item_added_to_cart.emit()
                     else:
-                        QtWidgets.QMessageBox.warning(self, "Quantity Error", "Not enough items in stock.")
-                except ValueError:
-                    pass
+                        # Log the error or handle it as per the application's requirements
+                        QtWidgets.QMessageBox.warning(self, "Error", f"Product ID not found for {product_name}, {brand}, {var}, {size}")
+
+                    conn.close()
+                else:
+                    QtWidgets.QMessageBox.warning(self, "Quantity Error", "Not enough items in stock.")
+            except ValueError:
+                QtWidgets.QMessageBox.warning(self, "Value Error", "Invalid quantity or price.")
+                continue
 
     def show_add_to_cart_dialog(self):
         selected_rows = set()
@@ -194,5 +194,3 @@ class ShopTab(QtWidgets.QWidget):
                 self.add_to_cart(quantity)
         else:
             QtWidgets.QMessageBox.warning(self, "Selection Error", "Please select a product to add to the cart.")
-
-
