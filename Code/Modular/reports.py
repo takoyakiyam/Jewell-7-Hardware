@@ -1,7 +1,7 @@
 import sqlite3
 from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox
-from PyQt5 import QtWidgets, QtCore
-
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtCore import Qt
 
 #Class for Reports Tab
 class ReportsTab(QtWidgets.QWidget):
@@ -136,28 +136,22 @@ class ReportsTab(QtWidgets.QWidget):
         self.transactions_table.resizeColumnsToContents()
     
     def flag_transaction(self):
-        for item in self.transactions_table.selectedItems():
-            row = item.row()
-            if row not in self.flagged_rows:
-                self.flagged_rows.add(row)
+        for row in set(item.row() for item in self.transactions_table.selectedItems()):
+            if row in self.flagged_rows:
+                # Unflag the row (remove red background)
                 for column in range(self.transactions_table.columnCount()):
                     item = self.transactions_table.item(row, column)
                     if item:
-                        item.setData(QtCore.Qt.ItemDataRole.UserRole, 'flagged')  # Set a flag to mark the row as flagged
-            else:
+                        item.setBackground(QtGui.QColor(Qt.white))  # Set background to white
                 self.flagged_rows.remove(row)
+            else:
+                # Flag the row (set red background)
                 for column in range(self.transactions_table.columnCount()):
                     item = self.transactions_table.item(row, column)
                     if item:
-                        item.setData(QtCore.Qt.ItemDataRole.UserRole, None)  # Remove the flag
+                        item.setBackground(QtGui.QColor(Qt.red))  # Set background to red
+                self.flagged_rows.add(row)
 
-        # Apply the stylesheet to the flagged rows
-        self.transactions_table.setStyleSheet('''
-            QTableWidgetItem[data-flagged="true"] {
-                border: 2px solid red;
-                border-style: solid;
-            }
-        ''')
 
     def remove_log(self):
         selected_items = self.transactions_table.selectedItems()
