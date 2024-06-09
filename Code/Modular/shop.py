@@ -114,6 +114,9 @@ class ShopTab(QtWidgets.QWidget):
                                             brand TEXT,
                                             var TEXT,
                                             size TEXT)''')
+                        
+                         # Update product quantity in the database
+                        cursor.execute("UPDATE products SET qty = ? WHERE product_name = ?", (new_qty, product_item.text()))
 
                         product_id = 1  # Replace with actual product ID retrieval logic
                         product_name = product_item.text()
