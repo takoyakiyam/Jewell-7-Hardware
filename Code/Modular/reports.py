@@ -152,13 +152,13 @@ class ReportsTab(QtWidgets.QWidget):
         rows = cursor.fetchall()
         conn.close()
 
-        # Group rows by date
+        # Group rows by customer
         grouped_rows = {}
         for row in rows:
-            date = row[3]  # Assuming date is at index 3
-            if date not in grouped_rows:
-                grouped_rows[date] = []
-            grouped_rows[date].append(row)
+            customer = row[1]  # Assuming customer is at index 1
+            if customer not in grouped_rows:
+                grouped_rows[customer] = []
+            grouped_rows[customer].append(row)
 
         # Calculate total number of rows after grouping
         total_rows = sum(len(group) for group in grouped_rows.values())
@@ -168,10 +168,10 @@ class ReportsTab(QtWidgets.QWidget):
 
         # Populate the table with transaction data
         row_number = 0
-        for date, group in grouped_rows.items():
-            if len(group) > 1:
-                self.transactions_table.setSpan(row_number, 0, len(group), 1)  # Span from row_number, column 0, spanning len(group) rows, 1 column
+        for customer, group in grouped_rows.items():
             for row_data in group:
+                if len(group) > 1:
+                    self.transactions_table.setSpan(row_number, 1, len(group), 1)  # Span from row_number, column 1, spanning len(group) rows, 1 column
                 for column_number, data in enumerate(row_data):
                     item = QTableWidgetItem(str(data))
                     self.transactions_table.setItem(row_number, column_number, item)
