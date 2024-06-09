@@ -148,7 +148,13 @@ class ShopTab(QtWidgets.QWidget):
                         # Retrieve product ID from products table
                         cursor.execute("SELECT product_id FROM products WHERE product_name =? AND brand =? AND var =? AND size =?", 
                                     (product_name, brand, var, size))
-                        product_id = cursor.fetchone()[0]
+                        product_id_result = cursor.fetchone()
+                        if product_id_result:
+                            product_id = product_id_result[0]
+                        else:
+                            QtWidgets.QMessageBox.warning(self, "Error", "Product ID not found!")
+                            conn.close()
+                            return
 
                         cursor.execute('''INSERT INTO cart (product_name, qty, total_price, date, transaction_id, product_id, log_id, brand, var, size)
                                         VALUES (?,?,?,?,?,?,?,?,?,?)''',
