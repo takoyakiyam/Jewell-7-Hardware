@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import datetime
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QSpinBox, QPushButton, QLineEdit
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 import uuid
 
 class CustomerNameDialog(QDialog):
@@ -196,11 +196,22 @@ class CartTab(QtWidgets.QWidget):
         if customer_dialog.exec_() == QDialog.Accepted:
             customer_name = customer_dialog.get_customer_name()
 
-            # Get current date
-            current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            # Get current date and time
+            current_date = datetime.now().strftime('%Y-%m-%d')
+            current_time = datetime.now().strftime('%H:%M:%S')
 
-            # Generate a unique transaction ID
-            transaction_id = str(uuid.uuid4())  # Generate a random UUID as a transaction ID
+            # Retrieve the user_id
+            conn = sqlite3.connect('j7h.db')
+            cursor = conn.cursor()
+            cursor.execute("SELECT user_id FROM users ORDER BY user_id LIMIT 1")
+            user_id_result = cursor.fetchone()
+            conn.close()
+
+            if user_id_result:
+                user_id = user_id_result[0]
+            else:
+                QtWidgets.QMessageBox.warning(self, "Error", "User ID not found!")
+                return
 
             # Iterate over rows in the cart table
             for row in range(self.cart_table.rowCount()):
@@ -222,21 +233,30 @@ class CartTab(QtWidgets.QWidget):
                     var = var_item.text()
                     size = size_item.text()
 
+                    # Retrieve product ID from cart table
+                    product_id = self.cart_table.item(row, 6).data(QtCore.Qt.UserRole)
+
                     # Replace with actual transaction type logic
                     transaction_type = "Purchase"
-                    # Replace with actual product ID retrieval logic
-                    product_id = 1
                     # Replace with actual log ID retrieval logic
                     log_id = 1
-                    # Inside the loop where you insert data into the transactions table
 
+                    # Generate a unique transaction ID
                     transaction_id = str(uuid.uuid4())
+
                     # Insert into transactions table
                     conn = sqlite3.connect('j7h.db')
                     cursor = conn.cursor()
                     cursor.execute('''INSERT INTO transactions (transaction_id, customer, product_name, qty, total_price, date, type, product_id, log_id, brand, var, size)
-                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''',
                                 (transaction_id, customer_name, product_name, qty, total_price, current_date, transaction_type, product_id, log_id, brand, var, size))
+
+                    # Insert into user_logs table
+                    action = "Checkout"
+                    cursor.execute('''INSERT INTO user_logs (log_id, user_id, action, time, date)
+                                    VALUES (?,?,?,?,?)''',
+                                (log_id, user_id, action, current_time, current_date))
+
                     conn.commit()
                     conn.close()
 
