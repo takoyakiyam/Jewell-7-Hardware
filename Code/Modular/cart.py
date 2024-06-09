@@ -97,32 +97,21 @@ class CartTab(QtWidgets.QWidget):
             """
             cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
         else:
-            cursor.execute("""
-            SELECT c.product_name, c.qty, c.brand, c.var, c.size, p.price, (c.qty * p.price) AS total_price
-            FROM cart c
-            INNER JOIN products p ON c.product_name = p.product_name
-        """)
+            cursor.execute("""SELECT rowid, product_name, brand, var, size, qty, total_price FROM cart""")
 
-        rows = cursor.fetchall()
+        products = cursor.fetchall()
 
-        self.cart_table.setRowCount(len(rows))
-        for row_number, row_data in enumerate(rows):
-            product_name = str(row_data[0])
-            quantity = int(row_data[1])
-            brand = str(row_data[2])
-            var = str(row_data[3])
-            size = str(row_data[4])
-            price = float(row_data[5])
-            total_price = float(row_data[6])
+        self.cart_table.setRowCount(len(products))
+        self.cart_table.setColumnCount(7)
+        self.cart_table.setHorizontalHeaderLabels(["RowID", "Product", "Brand", "Variation", "Size", "Quantity", "Total Price"])
 
-            self.cart_table.setItem(row_number, 0, QtWidgets.QTableWidgetItem(product_name))  # Product Name
-            self.cart_table.setItem(row_number, 1, QtWidgets.QTableWidgetItem(brand))  # Brand
-            self.cart_table.setItem(row_number, 2, QtWidgets.QTableWidgetItem(var))  # Variation
-            self.cart_table.setItem(row_number, 3, QtWidgets.QTableWidgetItem(size))  # Size
-            self.cart_table.setItem(row_number, 4, QtWidgets.QTableWidgetItem(str(quantity)))  # Quantity
-            self.cart_table.setItem(row_number, 5, QtWidgets.QTableWidgetItem(str(price)))  # Price
-            self.cart_table.setItem(row_number, 6, QtWidgets.QTableWidgetItem(str(total_price)))  # Total
+        for i, product in enumerate(products):
+            for j, value in enumerate(product):
+                self.cart_table.setItem(i, j, QtWidgets.QTableWidgetItem(str(value)))
 
+        self.resize_table()
+        conn.close()
+        self.cart_table.setColumnHidden(0, True)
         conn.close()
 
     def on_selection_changed(self):
@@ -275,4 +264,8 @@ class CartTab(QtWidgets.QWidget):
             # Display success message
             QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
 
-
+    def resize_table(self):
+        header = self.cart_table.horizontalHeader()
+        for i in range(1, self.cart_table.columnCount() - 1):
+            header.setSectionResizeMode(i, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(self.cart_table.columnCount() - 1, QtWidgets.QHeaderView.ResizeToContents)
