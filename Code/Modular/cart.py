@@ -1,7 +1,8 @@
 import sqlite3
 from datetime import datetime
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QSpinBox, QPushButton, QLineEdit
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtWidgets
+import uuid
 
 class CustomerNameDialog(QDialog):
     def __init__(self):
@@ -214,7 +215,6 @@ class CartTab(QtWidgets.QWidget):
         # Return the quantities of all products removed
         return quantities_removed
 
-
     def checkout(self):
         # Prompt user for customer name
         customer_dialog = CustomerNameDialog()
@@ -223,6 +223,9 @@ class CartTab(QtWidgets.QWidget):
 
             # Get current date
             current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            # Generate a unique transaction ID
+            transaction_id = str(uuid.uuid4())  # Generate a random UUID as a transaction ID
 
             # Iterate over rows in the cart table
             for row in range(self.cart_table.rowCount()):
@@ -250,13 +253,15 @@ class CartTab(QtWidgets.QWidget):
                     product_id = 1
                     # Replace with actual log ID retrieval logic
                     log_id = 1
+                    # Inside the loop where you insert data into the transactions table
 
+                    transaction_id = str(uuid.uuid4())
                     # Insert into transactions table
                     conn = sqlite3.connect('j7h.db')
                     cursor = conn.cursor()
-                    cursor.execute('''INSERT INTO transactions (customer, product_name, qty, total_price, date, type, product_id, log_id, brand, var, size)
-                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                                (customer_name, product_name, qty, total_price, current_date, transaction_type, product_id, log_id, brand, var, size))
+                    cursor.execute('''INSERT INTO transactions (transaction_id, customer, product_name, qty, total_price, date, type, product_id, log_id, brand, var, size)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                                (transaction_id, customer_name, product_name, qty, total_price, current_date, transaction_type, product_id, log_id, brand, var, size))
                     conn.commit()
                     conn.close()
 
@@ -265,3 +270,4 @@ class CartTab(QtWidgets.QWidget):
 
             # Display success message
             QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
+
