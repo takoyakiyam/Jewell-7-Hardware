@@ -69,18 +69,15 @@ class CartTab(QtWidgets.QWidget):
 
         # Create buttons for cart operations
         self.remove_button = QtWidgets.QPushButton("Remove Item")
-        self.update_button = QtWidgets.QPushButton("Update Quantity")
         self.clear_button = QtWidgets.QPushButton("Clear Cart")
         self.checkout_button = QtWidgets.QPushButton("Checkout")
 
         self.layout.addWidget(self.remove_button)
-        self.layout.addWidget(self.update_button)
         self.layout.addWidget(self.clear_button)
         self.layout.addWidget(self.checkout_button)
 
         # Connect buttons to methods
         self.remove_button.clicked.connect(self.remove_item)
-        self.update_button.clicked.connect(self.update_quantity)
         self.clear_button.clicked.connect(self.clear_cart)
         self.checkout_button.clicked.connect(self.checkout)
 
@@ -165,28 +162,6 @@ class CartTab(QtWidgets.QWidget):
         conn.commit()
         conn.close()
         self.load_cart_items()
-
-    def update_quantity(self):
-        selected_rows = set()
-        for item in self.cart_table.selectedItems():
-            selected_rows.add(item.row())
-        if selected_rows:
-            dialog = AddToCartDialog()
-            if dialog.exec_() == QDialog.Accepted:
-                quantity = dialog.get_quantity()
-                conn = sqlite3.connect('j7h.db')
-                cursor = conn.cursor()
-                for row in selected_rows:
-                    product_item = self.cart_table.item(row, 0)
-                    price_item = self.cart_table.item(row, 5)
-                    if product_item is not None and price_item is not None:
-                        product_name = product_item.text()
-                        price = float(price_item.text())
-                        total = quantity * price
-                        cursor.execute("UPDATE cart SET qty = ?, total_price = ? WHERE product_name = ?", (quantity, total, product_name))
-                conn.commit()
-                conn.close()
-                self.load_cart_items()
 
     def clear_cart(self):
         conn = sqlite3.connect('j7h.db')
