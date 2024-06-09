@@ -30,10 +30,17 @@ class ShopTab(QtWidgets.QWidget):
         super().__init__()
         self.initUI()
 
-    def load_products(self):
+    def load_products(self, search_query=None):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM products WHERE qty > 0")
+
+        if search_query:
+            query = "SELECT * FROM products WHERE qty > 0 AND (product_name LIKE ? OR brand LIKE ? OR var LIKE ? OR size LIKE ?)"
+            cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
+        else:
+            cursor.execute("SELECT * FROM products WHERE qty > 0")
+
         rows = cursor.fetchall()
         self.tableWidget.setRowCount(len(rows))
         for row_number, row_data in enumerate(rows):
@@ -48,7 +55,7 @@ class ShopTab(QtWidgets.QWidget):
 
     def search_products(self):
         search_query = self.lineEdit.text()
-        self.load_data(search_query)
+        self.load_products(search_query)
 
     def on_selection_changed(self):
         selected_rows = set()
@@ -64,6 +71,16 @@ class ShopTab(QtWidgets.QWidget):
         self.setWindowTitle('Shop')
         self.setGeometry(100, 100, 800, 600)
         self.layout = QtWidgets.QVBoxLayout(self)
+
+        # Search Component
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.lineEdit = QtWidgets.QLineEdit()
+        self.search_button = QtWidgets.QPushButton("Search")
+        self.search_button.clicked.connect(self.search_products)
+        self.horizontalLayout.addWidget(self.lineEdit)
+        self.horizontalLayout.addWidget(self.search_button)
+        self.layout.addLayout(self.horizontalLayout)
+
 
         self.tableWidget = QtWidgets.QTableWidget()
         self.tableWidget.setColumnCount(6)
