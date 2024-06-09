@@ -129,6 +129,15 @@ class CartTab(QtWidgets.QWidget):
             product_item = self.cart_table.item(row, 0)
             if product_item is not None:
                 product_name = product_item.text()
+                # Retrieve current quantity from the cart
+                cursor.execute("SELECT qty FROM cart WHERE product_name = ?", (product_name,))
+                current_qty_in_cart = cursor.fetchone()[0]
+                # Update product quantity in the database
+                cursor.execute("SELECT qty FROM products WHERE product_name = ?", (product_name,))
+                current_qty_in_db = cursor.fetchone()[0]
+                new_qty_in_db = current_qty_in_db + current_qty_in_cart
+                cursor.execute("UPDATE products SET qty = ? WHERE product_name = ?", (new_qty_in_db, product_name))
+                # Delete item from the cart
                 cursor.execute("DELETE FROM cart WHERE product_name = ?", (product_name,))
         conn.commit()
         conn.close()
@@ -159,11 +168,30 @@ class CartTab(QtWidgets.QWidget):
     def clear_cart(self):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
+        
+        # Retrieve quantities of all products in the cart before clearing
+        cursor.execute("SELECT product_name, qty FROM cart")
+        quantities_removed = {row[0]: row[1] for row in cursor.fetchall()}
+
+        # Update quantities of items in the products table
+        for product_name, qty in quantities_removed.items():
+            cursor.execute("UPDATE products SET qty = qty + ? WHERE product_name = ?", (qty, product_name))
+
+        # Clear the cart
         cursor.execute("DELETE FROM cart")
+        
         conn.commit()
         conn.close()
+        
+        # Reload cart items
         self.load_cart_items()
+        
+        # Inform the user about the cleared cart
         QtWidgets.QMessageBox.information(self, "Clear Cart", "All items have been removed from the cart.")
+        
+        # Return the quantities of all products removed
+        return quantities_removed
+
 
     def checkout(self):
         # Prompt user for customer name
