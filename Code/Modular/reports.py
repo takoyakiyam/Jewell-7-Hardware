@@ -54,6 +54,8 @@ class ReportsTab(QtWidgets.QWidget):
         # Add the table widget to the layout
         layout.addWidget(self.transactions_table)
 
+        self.transactions_table.itemSelectionChanged.connect(self.on_selection_changed)
+
         # Load transactions into the table
         self.load_transactions()
 
@@ -79,7 +81,16 @@ class ReportsTab(QtWidgets.QWidget):
     def on_selection_changed(self):
         selected_rows = set()
         for item in self.transactions_table.selectedItems():
-            selected_rows.add(item.row())
+            row = item.row()
+            customer_name = self.transactions_table.item(row, 1).text()
+            selected_rows.add(row)
+
+            # Find all other rows with the same customer name
+            for other_row in range(self.transactions_table.rowCount()):
+                if other_row != row and self.transactions_table.item(other_row, 1).text() == customer_name:
+                    selected_rows.add(other_row)
+
+        # Select all identified rows in the table
         for row in selected_rows:
             for column in range(self.transactions_table.columnCount()):
                 item = self.transactions_table.item(row, column)
