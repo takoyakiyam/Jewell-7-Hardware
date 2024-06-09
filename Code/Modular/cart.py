@@ -205,12 +205,21 @@ class CartTab(QtWidgets.QWidget):
             cursor = conn.cursor()
             cursor.execute("SELECT user_id FROM users ORDER BY user_id LIMIT 1")
             user_id_result = cursor.fetchone()
-            conn.close()
-
             if user_id_result:
                 user_id = user_id_result[0]
             else:
                 QtWidgets.QMessageBox.warning(self, "Error", "User ID not found!")
+                conn.close()
+                return
+
+            # Retrieve the next available log_id
+            cursor.execute("SELECT IFNULL(MAX(log_id), 0) + 1 FROM user_logs")
+            log_id_result = cursor.fetchone()
+            if log_id_result:
+                log_id = log_id_result[0]
+            else:
+                QtWidgets.QMessageBox.warning(self, "Error", "Unable to determine next log ID!")
+                conn.close()
                 return
 
             # Iterate over rows in the cart table
@@ -233,20 +242,18 @@ class CartTab(QtWidgets.QWidget):
                     var = var_item.text()
                     size = size_item.text()
 
-                    # Retrieve product ID from cart table
-                    product_id = self.cart_table.item(row, 6).data(QtCore.Qt.UserRole)
+                    # Retrieve product ID from products table
+                    cursor.execute("SELECT product_id FROM products WHERE product_name =? AND brand =? AND var =? AND size =?", 
+                                    (product_name, brand, var, size))
+                    product_id = cursor.fetchone()[0]
 
                     # Replace with actual transaction type logic
                     transaction_type = "Purchase"
-                    # Replace with actual log ID retrieval logic
-                    log_id = 1
 
                     # Generate a unique transaction ID
                     transaction_id = str(uuid.uuid4())
 
                     # Insert into transactions table
-                    conn = sqlite3.connect('j7h.db')
-                    cursor = conn.cursor()
                     cursor.execute('''INSERT INTO transactions (transaction_id, customer, product_name, qty, total_price, date, type, product_id, log_id, brand, var, size)
                                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''',
                                 (transaction_id, customer_name, product_name, qty, total_price, current_date, transaction_type, product_id, log_id, brand, var, size))
@@ -257,12 +264,15 @@ class CartTab(QtWidgets.QWidget):
                                     VALUES (?,?,?,?,?)''',
                                 (log_id, user_id, action, current_time, current_date))
 
-                    conn.commit()
-                    conn.close()
+                    log_id += 1  # Increment log_id for the next entry if there are multiple items
+
+            conn.commit()
+            conn.close()
 
             # Clear cart table
             self.clear_cart()
 
             # Display success message
             QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
+
 
