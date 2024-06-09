@@ -81,7 +81,6 @@ class ShopTab(QtWidgets.QWidget):
         self.horizontalLayout.addWidget(self.search_button)
         self.layout.addLayout(self.horizontalLayout)
 
-
         self.tableWidget = QtWidgets.QTableWidget()
         self.tableWidget.setColumnCount(6)
         self.tableWidget.setHorizontalHeaderLabels(['Product', 'Brand', 'Variation', 'Size', 'Price', 'Items in Stock'])
@@ -132,10 +131,9 @@ class ShopTab(QtWidgets.QWidget):
                                             var TEXT,
                                             size TEXT)''')
                         
-                         # Update product quantity in the database
-                        cursor.execute("UPDATE products SET qty = ? WHERE product_name = ?", (new_qty, product_item.text()))
+                        # Update product quantity in the database
+                        cursor.execute("UPDATE products SET qty =? WHERE product_name =?", (new_qty, product_item.text()))
 
-                        product_id = 1  # Replace with actual product ID retrieval logic
                         product_name = product_item.text()
                         brand = brand_item.text()
                         var = var_item.text()
@@ -147,9 +145,14 @@ class ShopTab(QtWidgets.QWidget):
                         transaction_id = 1  # Replace with actual transaction ID logic
                         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
+                        # Retrieve product ID from products table
+                        cursor.execute("SELECT product_id FROM products WHERE product_name =? AND brand =? AND var =? AND size =?", 
+                                    (product_name, brand, var, size))
+                        product_id = cursor.fetchone()[0]
+
                         cursor.execute('''INSERT INTO cart (product_name, qty, total_price, date, transaction_id, product_id, log_id, brand, var, size)
-                                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                                       (product_name, quantity, total_price, date, transaction_id, product_id, log_id, brand, var, size))
+                                        VALUES (?,?,?,?,?,?,?,?,?,?)''',
+                                    (product_name, quantity, total_price, date, transaction_id, product_id, log_id, brand, var, size))
 
                         conn.commit()
 
@@ -185,3 +188,5 @@ class ShopTab(QtWidgets.QWidget):
                 self.add_to_cart(quantity)
         else:
             QtWidgets.QMessageBox.warning(self, "Selection Error", "Please select a product to add to the cart.")
+
+
