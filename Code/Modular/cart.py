@@ -48,6 +48,15 @@ class CartTab(QtWidgets.QWidget):
         self.setGeometry(100, 100, 800, 600)
         self.layout = QtWidgets.QVBoxLayout(self)
 
+        # Search Component
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.lineEdit = QtWidgets.QLineEdit()
+        self.search_button = QtWidgets.QPushButton("Search")
+        self.search_button.clicked.connect(self.search_cart)
+        self.horizontalLayout.addWidget(self.lineEdit)
+        self.horizontalLayout.addWidget(self.search_button)
+        self.layout.addLayout(self.horizontalLayout)
+
         # Create a table to display cart items
         self.cart_table = QtWidgets.QTableWidget()
         self.cart_table.setColumnCount(7)
@@ -77,16 +86,25 @@ class CartTab(QtWidgets.QWidget):
         # Connect itemSelectionChanged signal to handle row selection
         self.cart_table.itemSelectionChanged.connect(self.on_selection_changed)
 
-    def load_cart_items(self):
+    def load_cart_items(self, search_query=None):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
 
-        # Join the 'cart' and 'products' tables to retrieve all necessary fields
-        cursor.execute("""
+        if search_query:
+            query = """
+                SELECT c.product_name, c.qty, c.brand, c.var, c.size, p.price, (c.qty * p.price) AS total_price
+                FROM cart c
+                INNER JOIN products p ON c.product_name = p.product_name
+                WHERE c.product_name LIKE ? OR c.brand LIKE ? OR c.var LIKE ? OR c.size LIKE ?
+            """
+            cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
+        else:
+            cursor.execute("""
             SELECT c.product_name, c.qty, c.brand, c.var, c.size, p.price, (c.qty * p.price) AS total_price
             FROM cart c
             INNER JOIN products p ON c.product_name = p.product_name
         """)
+
         rows = cursor.fetchall()
 
         self.cart_table.setRowCount(len(rows))
@@ -118,6 +136,10 @@ class CartTab(QtWidgets.QWidget):
                 item = self.cart_table.item(row, column)
                 if item:
                     item.setSelected(True)
+
+    def search_cart(self):
+        search_query = self.lineEdit.text()
+        self.load_cart_items(search_query)
 
     def remove_item(self):
         selected_rows = set()
@@ -243,4 +265,3 @@ class CartTab(QtWidgets.QWidget):
 
             # Display success message
             QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
-
