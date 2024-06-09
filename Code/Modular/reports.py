@@ -21,7 +21,7 @@ class ReportsTab(QtWidgets.QWidget):
         self.transactions_tab = QtWidgets.QWidget()
 
         # Add sub-tabs to the tab widget
-        self.tab_widget.addTab(self.reports_tab, "Reports")  
+        self.tab_widget.addTab(self.reports_tab, "User Logs")  
         self.tab_widget.addTab(self.transactions_tab, "Transactions")
 
         # Set layouts for each sub-tab
@@ -35,8 +35,34 @@ class ReportsTab(QtWidgets.QWidget):
 
     def initReportsTab(self):
         layout = QtWidgets.QVBoxLayout(self.reports_tab)
-        self.reports_label = QtWidgets.QLabel("This is the Reports section.")
-        layout.addWidget(self.reports_label)
+        
+        # Create the table widget for user logs
+        self.user_logs_table = QtWidgets.QTableWidget()
+        self.user_logs_table.setColumnCount(5)  # Set column count to match the number of columns in user_logs
+        self.user_logs_table.setHorizontalHeaderLabels([
+            'Log ID', 'User ID', 'Action', 'Time', 'Date'
+        ])
+        self.user_logs_table.horizontalHeader().setStretchLastSection(True)
+        self.user_logs_table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+
+        # Add the table widget to the layout
+        layout.addWidget(self.user_logs_table)
+
+        # Load user logs into the table
+        self.load_user_logs()
+
+        # Create buttons for clearing logs
+        buttons_layout = QtWidgets.QHBoxLayout()
+        clear_logs_button = QtWidgets.QPushButton("Clear User Logs")
+        
+        # Connect button signals to slots
+        clear_logs_button.clicked.connect(self.clear_user_logs)
+
+        # Add buttons to the layout
+        buttons_layout.addWidget(clear_logs_button)
+
+        # Add buttons layout to the main layout
+        layout.addLayout(buttons_layout)
 
     def initTransactionsTab(self):
         layout = QtWidgets.QVBoxLayout(self.transactions_tab)
@@ -96,6 +122,25 @@ class ReportsTab(QtWidgets.QWidget):
                 item = self.transactions_table.item(row, column)
                 if item:
                     item.setSelected(True)
+
+    def load_user_logs(self):
+        conn = sqlite3.connect('j7h.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT log_id, user_id, action, time, date FROM user_logs")
+        rows = cursor.fetchall()
+        conn.close()
+
+        # Set the number of rows in the table
+        self.user_logs_table.setRowCount(len(rows))
+
+        # Populate the table with user logs data
+        for row_number, row_data in enumerate(rows):
+            for column_number, data in enumerate(row_data):
+                item = QTableWidgetItem(str(data))
+                self.user_logs_table.setItem(row_number, column_number, item)
+
+        # Resize columns to fit contents
+        self.user_logs_table.resizeColumnsToContents()
 
     def load_transactions(self):
         conn = sqlite3.connect('j7h.db')
@@ -203,5 +248,23 @@ class ReportsTab(QtWidgets.QWidget):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
         cursor.execute("DELETE FROM transactions")
+        conn.commit()
+        conn.close()
+
+    def clear_user_logs(self):
+        reply = QMessageBox.question(self, 'Confirmation', 'Are you sure you want to clear all user logs?', 
+                                     QMessageBox.Yes | QMessageBox.No, 
+                                     QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            # Clear the table
+            self.user_logs_table.clearContents()
+            self.user_logs_table.setRowCount(0)
+            # Delete all log entries from the database
+            self.delete_all_user_logs_from_database()
+
+    def delete_all_user_logs_from_database(self):
+        conn = sqlite3.connect('j7h.db')
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM user_logs")
         conn.commit()
         conn.close()
