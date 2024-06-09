@@ -182,8 +182,9 @@ class Ui_MainWindow(object):
         self.shop_tab.item_added_to_cart.connect(self.update_cart_tab)
 
     def open_cart(self):
-        self.cart_tab = CartTab()
-        self.stackedWidget.addWidget(self.cart_tab)
+        if not hasattr(self, 'cart_tab'):
+            self.cart_tab = CartTab()
+            self.stackedWidget.addWidget(self.cart_tab)
         self.stackedWidget.setCurrentWidget(self.cart_tab)
 
     def open_products(self):
@@ -208,7 +209,8 @@ class Ui_MainWindow(object):
         pass  # Implement this function
 
     def update_cart_tab(self):
-        self.cart_tab.refresh_cart()
+        if hasattr(self, 'cart_tab'):
+            self.cart_tab.load_cart_items()
 
 if __name__ == "__main__":
     import sys
