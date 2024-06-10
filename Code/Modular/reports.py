@@ -3,6 +3,30 @@ from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt
 
+#Receipt Generation
+class ReceiptDialog(QtWidgets.QDialog):
+    def __init__(self, transaction_details):
+        super().__init__()
+        self.transaction_details = transaction_details
+        self.initUI()
+        
+    def initUI(self):
+        self.setWindowTitle('Receipt')
+        self.setGeometry(100, 100, 400, 600)
+        layout = QtWidgets.QVBoxLayout()
+
+        # Add transaction details to the layout
+        for key, value in self.transaction_details.items():
+            label = QtWidgets.QLabel(f"{key}: {value}")
+            layout.addWidget(label)
+
+        # Add a close button
+        close_button = QtWidgets.QPushButton("Close")
+        close_button.clicked.connect(self.close)
+        layout.addWidget(close_button)
+
+        self.setLayout(layout)
+
 #Class for Reports Tab
 class ReportsTab(QtWidgets.QWidget):
     def __init__(self):
@@ -85,21 +109,24 @@ class ReportsTab(QtWidgets.QWidget):
         # Load transactions into the table
         self.load_transactions()
 
-        # Create buttons for clearing logs and flagging transactions
+        # Create buttons for clearing logs, flagging transactions, and generating receipts
         buttons_layout = QtWidgets.QHBoxLayout()
         clear_logs_button = QtWidgets.QPushButton("Clear Transaction Logs")
         flag_transaction_button = QtWidgets.QPushButton("Flag Transaction")
-        delete_log_button = QtWidgets.QPushButton("Remove Transction")
+        delete_log_button = QtWidgets.QPushButton("Remove Transaction")
+        receipt_button = QtWidgets.QPushButton("Generate Receipt")
 
         # Connect button signals to slots
         clear_logs_button.clicked.connect(self.clear_logs)
         flag_transaction_button.clicked.connect(self.flag_transaction)
         delete_log_button.clicked.connect(self.remove_log)
+        receipt_button.clicked.connect(self.generate_receipt)
 
         # Add buttons to the layout
         buttons_layout.addWidget(clear_logs_button)
         buttons_layout.addWidget(flag_transaction_button)
         buttons_layout.addWidget(delete_log_button)
+        buttons_layout.addWidget(receipt_button)
 
         # Add buttons layout to the main layout
         layout.addLayout(buttons_layout)
@@ -268,3 +295,30 @@ class ReportsTab(QtWidgets.QWidget):
         cursor.execute("DELETE FROM user_logs")
         conn.commit()
         conn.close()
+
+    def generate_receipt(self):
+        selected_items = self.transactions_table.selectedItems()
+        if not selected_items:
+            QMessageBox.warning(self, 'No Selection', 'Please select a transaction to generate a receipt.')
+            return
+
+        # Assuming the first selected item is the transaction we want to generate a receipt for
+        first_selected_item = selected_items[0]
+        row = first_selected_item.row()
+
+        transaction_details = {
+            'Transaction ID': self.transactions_table.item(row, 0).text(),
+            'Customer': self.transactions_table.item(row, 1).text(),
+            'Quantity': self.transactions_table.item(row, 2).text(),
+            'Date and Time': self.transactions_table.item(row, 3).text(),
+            'Total Price': self.transactions_table.item(row, 4).text(),
+            'Product ID': self.transactions_table.item(row, 5).text(),
+            'Product Name': self.transactions_table.item(row, 6).text(),
+            'Brand': self.transactions_table.item(row, 7).text(),
+            'Size': self.transactions_table.item(row, 8).text(),
+            'Variation': self.transactions_table.item(row, 9).text(),
+        }
+
+        # Show the receipt dialog with transaction details
+        receipt_dialog = ReceiptDialog(transaction_details)
+        receipt_dialog.exec_()
