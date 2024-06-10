@@ -136,10 +136,10 @@ class ReportsTab(QtWidgets.QWidget):
         
         # Create the table widget
         self.transactions_table = QtWidgets.QTableWidget()
-        self.transactions_table.setColumnCount(11)  # Update column count to match the number of columns
+        self.transactions_table.setColumnCount(12)  # Update column count to match the number of columns
         self.transactions_table.setHorizontalHeaderLabels([
-            'Transaction ID', 'Customer', 'Quantity', 'Date','Time', 'Total Price', 'Product ID', 'Product Name', 
-            'Brand', 'Size', 'Variation'
+            'Transaction ID',  'Cashier', 'Customer', 'Quantity', 'Date','Time', 'Total Price', 'Product ID', 'Product Name', 
+            'Brand', 'Size', 'Variation',
         ])
         self.transactions_table.horizontalHeader().setStretchLastSection(True)
         self.transactions_table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -215,10 +215,11 @@ class ReportsTab(QtWidgets.QWidget):
     def load_transactions(self):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
-        cursor.execute("""SELECT transactions.transaction_id, transactions.customer, transactions.qty, transactions.date, transactions.time, transactions.total_price, 
-                            transactions.product_id, products.product_name, products.brand, products.size, products.var, transactions.log_id
+        cursor.execute("""SELECT transactions.transaction_id, users.first_name, transactions.customer, transactions.qty, transactions.date, transactions.time, transactions.total_price, 
+                            transactions.product_id, products.product_name, products.brand, products.size, products.var
                         FROM transactions
-                        JOIN products ON transactions.product_id = products.product_id""")
+                        JOIN products ON transactions.product_id = products.product_id
+                        JOIN users ON transactions.user_id = users.user_id""")
         rows = cursor.fetchall()
         conn.close()
 
