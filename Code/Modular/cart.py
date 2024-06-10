@@ -186,7 +186,7 @@ class CartTab(QtWidgets.QWidget):
 
             # Get current date and time
             current_date = datetime.now().strftime('%Y-%m-%d')
-            current_time = datetime.now().strftime('%H:%M:%S')
+            current_time = datetime.now().strftime("%I:%M %p")
 
             # Retrieve the user_id
             conn = sqlite3.connect('j7h.db')
@@ -209,6 +209,8 @@ class CartTab(QtWidgets.QWidget):
                 QtWidgets.QMessageBox.warning(self, "Error", "Unable to determine next log ID!")
                 conn.close()
                 return
+
+            transaction_successful = True
 
             for row in range(self.cart_table.rowCount()):
                 product_name_item = self.cart_table.item(row, 1)
@@ -239,13 +241,12 @@ class CartTab(QtWidgets.QWidget):
                         continue  # Skip this item
 
                     # Replace with actual transaction type logic
-                    transaction_type = "purchase"   
+                    transaction_type = "purchase"
 
-                    cursor = conn.cursor()
                     # Insert into transactions table
-                    cursor.execute('''INSERT INTO transactions (customer, product_name, qty, total_price, date, type, product_id, log_id, brand, var, size)
-                        VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
-                    ( customer_name, product_name, qty, total_price, current_date, transaction_type, product_id, log_id, brand, var, size))
+                    cursor.execute('''INSERT INTO transactions (customer, product_name, qty, total_price, date, time, type, product_id, log_id, brand, var, size)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''',
+                    (customer_name, product_name, qty, total_price, current_date, current_time, transaction_type, product_id, log_id, brand, var, size))
 
                     # Insert into user_logs table
                     action = "checkout"
@@ -255,15 +256,15 @@ class CartTab(QtWidgets.QWidget):
 
                     log_id += 1  # Increment log_id for the next entry if there are multiple items
 
-                    conn.commit()
-                    conn.close()
+            conn.commit()
+            conn.close()
 
-                    # Clear cart table
-                    self.clear_cart()
+            # Clear cart table
+            self.clear_cart()
 
-                    # Display success message
-                    QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
-
+            # Display success message
+            if transaction_successful:
+                QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
 
     def resize_table(self):
         header = self.cart_table.horizontalHeader()
