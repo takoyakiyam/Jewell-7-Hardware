@@ -136,9 +136,9 @@ class ReportsTab(QtWidgets.QWidget):
         
         # Create the table widget
         self.transactions_table = QtWidgets.QTableWidget()
-        self.transactions_table.setColumnCount(12)  # Update column count to match the number of columns
+        self.transactions_table.setColumnCount(13)  # Update column count to match the number of columns
         self.transactions_table.setHorizontalHeaderLabels([
-            'Transaction ID',  'Cashier', 'Customer', 'Quantity', 'Date','Time', 'Total Price', 'Product ID', 'Product Name', 
+            'Transaction ID',  'Cashier', 'Customer', 'Quantity', 'Date','Time', 'Total Price', 'Product ID', 'Category', 'Product Name', 
             'Brand', 'Size', 'Variation',
         ])
         self.transactions_table.horizontalHeader().setStretchLastSection(True)
@@ -216,7 +216,7 @@ class ReportsTab(QtWidgets.QWidget):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
         cursor.execute("""SELECT transactions.transaction_id, users.first_name, transactions.customer, transactions.qty, transactions.date, transactions.time, transactions.total_price, 
-                            transactions.product_id, products.product_name, products.brand, products.size, products.var
+                            transactions.product_id, products.category, products.product_name, products.brand, products.size, products.var
                         FROM transactions
                         JOIN products ON transactions.product_id = products.product_id
                         JOIN users ON transactions.user_id = users.user_id""")
