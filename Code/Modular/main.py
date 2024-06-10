@@ -158,6 +158,7 @@ class Ui_MainWindow(object):
         self.reports_button.clicked.connect(self.open_reports)
         self.analytics_button.clicked.connect(self.open_analytics)
         self.returns_button.clicked.connect(self.open_returns)
+        self.logout_button.clicked.connect(self.logout)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -211,6 +212,16 @@ class Ui_MainWindow(object):
     def update_cart_tab(self):
         if hasattr(self, 'cart_tab'):
             self.cart_tab.load_cart_items()
+
+    def logout(self):
+        from login import Ui_Login
+        # Create and show the login window
+        self.login_window = QtWidgets.QMainWindow()
+        self.ui = Ui_Login()
+        self.ui.setupUi(self.login_window)
+        self.login_window.show()
+        # Close the main window
+        QtWidgets.QApplication.instance().activeWindow().close()
 
 if __name__ == "__main__":
     import sys
