@@ -2,7 +2,6 @@ import sqlite3
 from datetime import datetime
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QSpinBox, QPushButton, QLineEdit
 from PyQt5 import QtWidgets, QtCore
-import uuid
 
 class CustomerNameDialog(QDialog):
     def __init__(self):
@@ -212,10 +211,10 @@ class CartTab(QtWidgets.QWidget):
                 return
 
             for row in range(self.cart_table.rowCount()):
-                product_name_item = self.cart_table.item(row, 0)
-                brand_item = self.cart_table.item(row, 1)
-                var_item = self.cart_table.item(row, 2)
-                size_item = self.cart_table.item(row, 3)
+                product_name_item = self.cart_table.item(row, 1)
+                brand_item = self.cart_table.item(row, 2)
+                var_item = self.cart_table.item(row, 3)
+                size_item = self.cart_table.item(row, 4)
                 qty_item = self.cart_table.item(row, 5)
                 total_price_item = self.cart_table.item(row, 6)
 
@@ -223,36 +222,30 @@ class CartTab(QtWidgets.QWidget):
                     product_name = product_name_item.text()
                     qty = int(qty_item.text())
                     total_price = float(total_price_item.text())
-                    brand = brand_item.text()
-                    var = var_item.text()
+                    brand = brand_item.text() if brand_item.text() else None
+                    var = var_item.text() if var_item.text() else None
                     size = size_item.text()
 
-                    cursor.execute("""SELECT product_id FROM products 
-                                WHERE product_name =? 
-                                AND (brand =? OR brand IS NULL) 
-                                AND (var =? OR brand IS NULL)
-                                AND (size =? OR size IS NULL)""", 
-                                (product_name, brand, var, size))
+                    query = "SELECT product_id FROM products WHERE product_name = ? AND (brand = ? OR ? IS NULL) AND (var = ? OR ? IS NULL) AND (size = ? OR size IS NULL)"
+                    cursor.execute(query, (product_name, brand, brand, var, var, size))
                     product_id_result = cursor.fetchone()
 
                     if product_id_result:
                         product_id = product_id_result[0]
                     else:
-                        # Handle the case where product_id_result is None
-                        product_id = None  # or some default value
-                        # You may also want to display an error message or log an error
+                        # Log the error and continue with the next item
+                        QtWidgets.QMessageBox.warning(self, "Error", f"Product ID not found for {brand}!")
+                        transaction_successful = False
+                        continue  # Skip this item
 
-                    # Generate a unique transaction ID                     
-                    transaction_id = str(uuid.uuid4())
                     # Replace with actual transaction type logic
                     transaction_type = "purchase"   
 
-                    conn = sqlite3.connect('j7h.db')
                     cursor = conn.cursor()
                     # Insert into transactions table
-                    cursor.execute('''INSERT INTO transactions (transaction_id, customer, product_name, qty, total_price, date, type, product_id, log_id, brand, var, size)
-                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''',
-                    (transaction_id, customer_name, product_name, qty, total_price, current_date, transaction_type, product_id, log_id, brand, var, size))
+                    cursor.execute('''INSERT INTO transactions (customer, product_name, qty, total_price, date, type, product_id, log_id, brand, var, size)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
+                    ( customer_name, product_name, qty, total_price, current_date, transaction_type, product_id, log_id, brand, var, size))
 
                     # Insert into user_logs table
                     action = "checkout"
