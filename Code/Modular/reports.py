@@ -260,11 +260,11 @@ class ReportsTab(QtWidgets.QWidget):
                         item.setBackground(QtGui.QColor(Qt.white))  # Set background to white
                 self.flagged_rows.remove(row)
             else:
-                # Flag the row (set red background)
+                # Flag the row (set orange background)
                 for column in range(self.transactions_table.columnCount()):
                     item = self.transactions_table.item(row, column)
                     if item:
-                        item.setBackground(QtGui.QColor(Qt.red))  # Set background to red
+                        item.setBackground(QtGui.QColor(Qt.orange))  # Set background to orange
                 self.flagged_rows.add(row)
 
 
