@@ -11,7 +11,6 @@ class ProductsTab(QtWidgets.QWidget):
         self.load_data()
         self.tableWidget.itemSelectionChanged.connect(self.on_selection_changed)
 
-
     def setup_ui(self):
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
@@ -75,40 +74,40 @@ class ProductsTab(QtWidgets.QWidget):
         
         self.verticalLayout.addLayout(self.horizontalLayout_5)
 
-    def set_cell_background_color(self, row, column, color):
+    def apply_stock_alert(self, row, column, color):
         item = self.tableWidget.item(row, column)
         if item is not None:
             item.setBackground(QtGui.QColor(color))
 
-    def highlight_qty_cells(self):
+    def stock_alert(self):
         for row in range(self.tableWidget.rowCount()):
             qty_item = self.tableWidget.item(row, 6)
             if qty_item is not None:
                 try:
                     qty = float(qty_item.text())
                     if qty <= 5:
-                        self.set_cell_background_color(row, 6, "#ffcccc")
+                        self.apply_stock_alert(row, 6, "#ffcccc")
                     elif 5 < qty < 15:
-                        self.set_cell_background_color(row, 6, "#ffcc99")
+                        self.apply_stock_alert(row, 6, "#ffcc99")
                     else:
-                        self.set_cell_background_color(row, 6, "#ccffcc")
+                        self.apply_stock_alert(row, 6, "#ccffcc")
                 except ValueError:
-                    self.set_cell_background_color(row, 6, "#ffffff")
+                    self.apply_stock_alert(row, 6, "#ffffff")
 
     def load_data(self, search_query=None):
         conn = sqlite3.connect('j7h.db')
         cur = conn.cursor()
         if search_query:
-            cur.execute("SELECT rowid, product_name, brand, var, size, price, qty FROM products WHERE "
-                        "product_name LIKE ? OR brand LIKE ? OR var LIKE ? OR size LIKE ?",
-                        ('%{}%'.format(search_query), '%{}%'.format(search_query), '%{}%'.format(search_query), '%{}%'.format(search_query)))
+            cur.execute("SELECT rowid, product_name, brand, var, size, price, qty, category FROM products WHERE "
+                        "product_name LIKE ? OR brand LIKE ? OR var LIKE ? OR size LIKE ? OR category LIKE ?",
+                        ('%{}%'.format(search_query), '%{}%'.format(search_query), '%{}%'.format(search_query), '%{}%'.format(search_query), '%{}%'.format(search_query)))
         else:
-            cur.execute("SELECT rowid, product_name, brand, var, size, price, qty FROM products")
+            cur.execute("SELECT rowid, product_name, brand, var, size, price, qty, category FROM products")
 
         products = cur.fetchall()
         self.tableWidget.setRowCount(len(products))
-        self.tableWidget.setColumnCount(7)
-        self.tableWidget.setHorizontalHeaderLabels(["RowID", "Product Name", "Brand", "Var", "Size", "Price", "Qty"])
+        self.tableWidget.setColumnCount(8)
+        self.tableWidget.setHorizontalHeaderLabels(["RowID", "Product Name", "Brand", "Var", "Size", "Price", "Qty", "Category"])
 
         for i, product in enumerate(products):
             for j, value in enumerate(product):
@@ -117,7 +116,7 @@ class ProductsTab(QtWidgets.QWidget):
         self.resize_table()
         conn.close()
         self.tableWidget.setColumnHidden(0, True)
-        self.highlight_qty_cells()
+        self.stock_alert()
 
     def on_selection_changed(self):
         selected_rows = set()
@@ -158,8 +157,9 @@ class ProductsTab(QtWidgets.QWidget):
         size = self.tableWidget.item(row, 4).text()
         price = self.tableWidget.item(row, 5).text()
         qty = self.tableWidget.item(row, 6).text()
+        category = self.tableWidget.item(row, 7).text()
 
-        dialog = ModifyProductDialog(self, rowid, product_name, brand, var, size, price, qty)
+        dialog = ModifyProductDialog(self, rowid, product_name, brand, var, size, price, qty, category)
         dialog.exec_()
         self.load_data()
 
@@ -192,7 +192,7 @@ class AddProductDialog(QtWidgets.QDialog):
         self.setGeometry(100, 100, 300, 200)
         layout = QtWidgets.QVBoxLayout()
 
-        self.product_name_label = QtWidgets.QLabel("Product Name:")
+        self.product_name_label = QtWidgets.QLabel("Product Name: *")
         self.product_name_input = QtWidgets.QLineEdit()
         layout.addWidget(self.product_name_label)
         layout.addWidget(self.product_name_input)
@@ -212,15 +212,20 @@ class AddProductDialog(QtWidgets.QDialog):
         layout.addWidget(self.size_label)
         layout.addWidget(self.size_input)
 
-        self.price_label = QtWidgets.QLabel("Price:")
+        self.price_label = QtWidgets.QLabel("Price: *")
         self.price_input = QtWidgets.QLineEdit()
         layout.addWidget(self.price_label)
         layout.addWidget(self.price_input)
 
-        self.qty_label = QtWidgets.QLabel("Qty:")
+        self.qty_label = QtWidgets.QLabel("Qty: *")
         self.qty_input = QtWidgets.QLineEdit()
         layout.addWidget(self.qty_label)
         layout.addWidget(self.qty_input)
+
+        self.category_label = QtWidgets.QLabel("Category: *")
+        self.category_input = QtWidgets.QLineEdit()
+        layout.addWidget(self.category_label)
+        layout.addWidget(self.category_input)
 
         self.add_button = QtWidgets.QPushButton("Add")
         self.add_button.clicked.connect(self.add_product)
@@ -229,24 +234,45 @@ class AddProductDialog(QtWidgets.QDialog):
         self.setLayout(layout)
         
     def add_product(self):
-        product_name = self.product_name_input.text()
-        brand = self.brand_input.text()
-        var = self.var_input.text()
-        size = self.size_input.text()
-        price = self.price_input.text()
-        qty = self.qty_input.text()
+        product_name = self.product_name_input.text().strip()
+        brand = self.brand_input.text().strip() or "None"
+        var = self.var_input.text().strip() or "None"
+        size = self.size_input.text().strip() or "None"
+        price = self.price_input.text().strip()
+        qty = self.qty_input.text().strip()
+        category = self.category_input.text().strip()
 
+        # Check for required fields
+        if not product_name or not price or not qty or not category:
+            QtWidgets.QMessageBox.warning(self, "Input Error", "Please fill in all required fields *.")
+            return
+
+        # Validate that price and qty are numeric
+        try:
+            float(price)
+        except ValueError:
+            QtWidgets.QMessageBox.warning(self, "Input Error", "Price must be a valid number.")
+            return
+
+        try:
+            int(qty)
+        except ValueError:
+            QtWidgets.QMessageBox.warning(self, "Input Error", "Qty must be a valid integer.")
+            return
+
+        # Insert the new product into the database
         conn = sqlite3.connect('j7h.db')
         cur = conn.cursor()
-        cur.execute("INSERT INTO products (product_name, brand, var, size, price, qty) VALUES (?, ?, ?, ?, ?, ?)",
-                    (product_name, brand, var, size, price, qty))
+        cur.execute("INSERT INTO products (product_name, brand, var, size, price, qty, category) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (product_name, brand, var, size, price, qty, category))
         conn.commit()
         conn.close()
 
         self.accept()
 
+
 class ModifyProductDialog(QtWidgets.QDialog):
-    def __init__(self, parent=None, rowid=None, product_name=None, brand=None, var=None, size=None, price=None, qty=None):
+    def __init__(self, parent=None, rowid=None, product_name=None, brand=None, var=None, size=None, price=None, qty=None, category=None):
         super().__init__(parent)
         self.setWindowTitle("Modify Product")
         self.setGeometry(100, 100, 300, 200)
@@ -254,7 +280,7 @@ class ModifyProductDialog(QtWidgets.QDialog):
 
         layout = QtWidgets.QVBoxLayout()
 
-        self.product_name_label = QtWidgets.QLabel("Product Name:")
+        self.product_name_label = QtWidgets.QLabel("Product Name: *")
         self.product_name_input = QtWidgets.QLineEdit(product_name)
         layout.addWidget(self.product_name_label)
         layout.addWidget(self.product_name_input)
@@ -274,15 +300,20 @@ class ModifyProductDialog(QtWidgets.QDialog):
         layout.addWidget(self.size_label)
         layout.addWidget(self.size_input)
 
-        self.price_label = QtWidgets.QLabel("Price:")
+        self.price_label = QtWidgets.QLabel("Price: *")
         self.price_input = QtWidgets.QLineEdit(price)
         layout.addWidget(self.price_label)
         layout.addWidget(self.price_input)
 
-        self.qty_label = QtWidgets.QLabel("Qty:")
+        self.qty_label = QtWidgets.QLabel("Qty: *")
         self.qty_input = QtWidgets.QLineEdit(qty)
         layout.addWidget(self.qty_label)
         layout.addWidget(self.qty_input)
+
+        self.category_label = QtWidgets.QLabel("Category: *")
+        self.category_input = QtWidgets.QLineEdit(category)
+        layout.addWidget(self.category_label)
+        layout.addWidget(self.category_input)
 
         self.modify_button = QtWidgets.QPushButton("Modify")
         self.modify_button.clicked.connect(self.modify_product)
@@ -291,18 +322,39 @@ class ModifyProductDialog(QtWidgets.QDialog):
         self.setLayout(layout)
 
     def modify_product(self):
-        product_name = self.product_name_input.text()
-        brand = self.brand_input.text()
-        var = self.var_input.text()
-        size = self.size_input.text()
-        price = self.price_input.text()
-        qty = self.qty_input.text()
+        product_name = self.product_name_input.text().strip()
+        brand = self.brand_input.text().strip() or "None"
+        var = self.var_input.text().strip() or "None"
+        size = self.size_input.text().strip() or "None"
+        price = self.price_input.text().strip()
+        qty = self.qty_input.text().strip()
+        category = self.category_input.text().strip()
 
+        # Check for required fields
+        if not product_name or not price or not qty or not category:
+            QtWidgets.QMessageBox.warning(self, "Input Error", "Please fill in all required fields *")
+            return
+
+        # Validate that price and qty are numeric
+        try:
+            float(price)
+        except ValueError:
+            QtWidgets.QMessageBox.warning(self, "Input Error", "Price must be a valid number.")
+            return
+
+        try:
+            int(qty)
+        except ValueError:
+            QtWidgets.QMessageBox.warning(self, "Input Error", "Qty must be a valid integer.")
+            return
+
+        # Update the product in the database
         conn = sqlite3.connect('j7h.db')
         cur = conn.cursor()
-        cur.execute("UPDATE products SET product_name=?, brand=?, var=?, size=?, price=?, qty=? WHERE rowid=?",
-                    (product_name, brand, var, size, price, qty, self.rowid))
+        cur.execute("UPDATE products SET product_name=?, brand=?, var=?, size=?, price=?, qty=?, category=? WHERE rowid=?",
+                (product_name, brand, var, size, price, qty, category, self.rowid))
         conn.commit()
         conn.close()
 
         self.accept()
+
