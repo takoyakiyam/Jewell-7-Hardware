@@ -112,7 +112,6 @@ class ShopTab(QtWidgets.QWidget):
                 QtWidgets.QMessageBox.warning(self, "Error", "One or more fields are missing!")
                 continue
             
-            category = category_item.text()
             product_name = product_item.text()
             brand = brand_item.text() if brand_item else None
             var = var_item.text() if var_item else None
@@ -138,7 +137,6 @@ class ShopTab(QtWidgets.QWidget):
                     cursor.execute("UPDATE products SET qty = ? WHERE product_name = ?", (new_qty, product_name))
 
                     total_price = quantity * price
-                    user_id = 1  # Replace with actual user ID retrieval logic
                     log_id = 1  # Replace with actual log ID retrieval logic
                     transaction_id = 1  # Replace with actual transaction ID logic
                     date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -155,9 +153,9 @@ class ShopTab(QtWidgets.QWidget):
                     if product_id_result:
                         product_id = product_id_result[0]
                 
-                        cursor.execute('''INSERT INTO cart (category, product_name, qty, total_price, date, transaction_id, product_id, log_id, brand, var, size)
+                        cursor.execute('''INSERT INTO cart (product_name, qty, total_price, date, transaction_id, product_id, log_id, brand, var, size)
                                       VALUES (?,?,?,?,?,?,?,?,?,?)''',
-                                   (category_item, product_name, quantity, total_price, date, transaction_id, product_id, log_id, brand, var, size))
+                                   (product_name, quantity, total_price, date, transaction_id, product_id, log_id, brand, var, size))
 
                         conn.commit()
 
