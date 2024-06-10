@@ -244,13 +244,13 @@ class CartTab(QtWidgets.QWidget):
                     transaction_type = "purchase"
 
                     # Insert into transactions table
-                    cursor.execute('''INSERT INTO transactions (customer, product_name, qty, total_price, date, time, type, product_id, log_id, brand, var, size)
-                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''',
-                    (customer_name, product_name, qty, total_price, current_date, current_time, transaction_type, product_id, log_id, brand, var, size))
+                    cursor.execute('''INSERT INTO transactions (customer, product_name, qty, total_price, date, time, type, product_id, log_id, brand, var, size, user_id)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                    (customer_name, product_name, qty, total_price, current_date, current_time, transaction_type, product_id, log_id, brand, var, size, user_id))
 
                     # Update the quantity in the products table
                     cursor.execute("UPDATE products SET qty = qty - ? WHERE product_id = ?", (qty, product_id))
-                    
+
                     # Insert into user_logs table
                     action = "checkout"
                     cursor.execute('''INSERT INTO user_logs (user_id, action, time, date)
