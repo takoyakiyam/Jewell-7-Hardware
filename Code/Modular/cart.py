@@ -251,7 +251,7 @@ class CartTab(QtWidgets.QWidget):
                     cursor = conn.cursor()
                     # Insert into transactions table
                     cursor.execute('''INSERT INTO transactions (transaction_id, customer, product_name, qty, total_price, date, type, product_id, log_id, brand, var, size)
-                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''',
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''',
                     (transaction_id, customer_name, product_name, qty, total_price, current_date, transaction_type, product_id, log_id, brand, var, size))
 
                     # Insert into user_logs table
