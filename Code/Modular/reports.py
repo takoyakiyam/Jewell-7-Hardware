@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt
 
-#Receipt Generation
 class ReceiptDialog(QtWidgets.QDialog):
     def __init__(self, transaction_details):
         super().__init__()
@@ -15,10 +14,54 @@ class ReceiptDialog(QtWidgets.QDialog):
         self.setGeometry(100, 100, 400, 600)
         layout = QtWidgets.QVBoxLayout()
 
-        # Add transaction details to the layout
-        for key, value in self.transaction_details.items():
-            label = QtWidgets.QLabel(f"{key}: {value}")
-            layout.addWidget(label)
+        # Add header
+        header_label = QtWidgets.QLabel("Receipt")
+        header_label.setAlignment(Qt.AlignCenter)
+        header_label.setStyleSheet("font-size: 18pt; font-weight: bold;")
+        layout.addWidget(header_label)
+
+        # Add store details
+        store_details_label = QtWidgets.QLabel("Store Name\nAddress Line 1\nAddress Line 2\nPhone Number")
+        store_details_label.setAlignment(Qt.AlignCenter)
+        store_details_label.setStyleSheet("font-size: 10pt;")
+        layout.addWidget(store_details_label)
+
+        # Add a line separator
+        separator = QtWidgets.QFrame()
+        separator.setFrameShape(QtWidgets.QFrame.HLine)
+        separator.setFrameShadow(QtWidgets.QFrame.Sunken)
+        layout.addWidget(separator)
+
+        # Add transaction details in a structured format
+        details_layout = QtWidgets.QFormLayout()
+
+        details_layout.addRow("Transaction ID:", QtWidgets.QLabel(self.transaction_details['Transaction ID']))
+        details_layout.addRow("Customer:", QtWidgets.QLabel(self.transaction_details['Customer']))
+        details_layout.addRow("Date and Time:", QtWidgets.QLabel(self.transaction_details['Date and Time']))
+        details_layout.addRow("Total Price:", QtWidgets.QLabel(self.transaction_details['Total Price']))
+
+        # Add another separator
+        layout.addWidget(separator)
+
+        # Add product details in a table format
+        products_table = QtWidgets.QTableWidget()
+        products_table.setColumnCount(5)
+        products_table.setHorizontalHeaderLabels(['Product ID', 'Product Name', 'Brand', 'Size', 'Variation'])
+        products_table.setRowCount(1)
+        products_table.setItem(0, 0, QTableWidgetItem(self.transaction_details['Product ID']))
+        products_table.setItem(0, 1, QTableWidgetItem(self.transaction_details['Product Name']))
+        products_table.setItem(0, 2, QTableWidgetItem(self.transaction_details['Brand']))
+        products_table.setItem(0, 3, QTableWidgetItem(self.transaction_details['Size']))
+        products_table.setItem(0, 4, QTableWidgetItem(self.transaction_details['Variation']))
+        products_table.horizontalHeader().setStretchLastSection(True)
+        products_table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        layout.addWidget(products_table)
+
+        # Add footer
+        footer_label = QtWidgets.QLabel("Thank you for shopping with us!")
+        footer_label.setAlignment(Qt.AlignCenter)
+        footer_label.setStyleSheet("font-size: 10pt; font-style: italic;")
+        layout.addWidget(footer_label)
 
         # Add a close button
         close_button = QtWidgets.QPushButton("Close")
@@ -302,14 +345,24 @@ class ReportsTab(QtWidgets.QWidget):
             QMessageBox.warning(self, 'No Selection', 'Please select a transaction to generate a receipt.')
             return
 
-        # Assuming the first selected item is the transaction we want to generate a receipt for
-        first_selected_item = selected_items[0]
-        row = first_selected_item.row()
+        # Get the unique transaction IDs from the selected items
+        transaction_ids = set()
+        for item in selected_items:
+            transaction_id = self.transactions_table.item(item.row(), 0).text()
+            transaction_ids.add(transaction_id)
+
+        if len(transaction_ids) != 1:
+            QMessageBox.warning(self, 'Multiple Selections', 'Please select items from a single transaction.')
+            return
+
+        transaction_id = transaction_ids.pop()
+
+        # Get the row index of the selected transaction
+        row = selected_items[0].row()
 
         transaction_details = {
             'Transaction ID': self.transactions_table.item(row, 0).text(),
             'Customer': self.transactions_table.item(row, 1).text(),
-            'Quantity': self.transactions_table.item(row, 2).text(),
             'Date and Time': self.transactions_table.item(row, 3).text(),
             'Total Price': self.transactions_table.item(row, 4).text(),
             'Product ID': self.transactions_table.item(row, 5).text(),
@@ -322,3 +375,4 @@ class ReportsTab(QtWidgets.QWidget):
         # Show the receipt dialog with transaction details
         receipt_dialog = ReceiptDialog(transaction_details)
         receipt_dialog.exec_()
+
