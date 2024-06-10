@@ -264,7 +264,7 @@ class ReportsTab(QtWidgets.QWidget):
                 for column in range(self.transactions_table.columnCount()):
                     item = self.transactions_table.item(row, column)
                     if item:
-                        item.setBackground(QtGui.QColor(Qt.orange))  # Set background to orange
+                        item.setBackground(QtGui.QColor('orange'))  # Set background to orange
                 self.flagged_rows.add(row)
 
 
@@ -375,4 +375,3 @@ class ReportsTab(QtWidgets.QWidget):
         # Show the receipt dialog with transaction details
         receipt_dialog = ReceiptDialog(transaction_details)
         receipt_dialog.exec_()
-
