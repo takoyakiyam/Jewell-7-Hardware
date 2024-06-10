@@ -67,6 +67,20 @@ class CartTab(QtWidgets.QWidget):
 
         self.layout.addWidget(self.cart_table)
 
+        # Create a horizontal layout for the total label
+        total_layout = QtWidgets.QHBoxLayout()
+        self.layout.addLayout(total_layout)
+
+        # Create the total label and set its properties
+        self.total_label = QtWidgets.QLabel()
+        font = self.total_label.font()
+        font.setPointSize(14)
+        font.setBold(True)
+        self.total_label.setFont(font)
+        total_layout.addStretch(1)
+        total_layout.addWidget(self.total_label)
+        total_layout.setAlignment(QtCore.Qt.AlignRight)
+
         # Create buttons for cart operations
         self.remove_button = QtWidgets.QPushButton("Remove Item")
         self.clear_button = QtWidgets.QPushButton("Clear Cart")
@@ -83,6 +97,10 @@ class CartTab(QtWidgets.QWidget):
 
         # Connect itemSelectionChanged signal to handle row selection
         self.cart_table.itemSelectionChanged.connect(self.on_selection_changed)
+
+    def update_total_label(self):
+        total = sum(float(self.cart_table.item(row, 6).text()) for row in range(self.cart_table.rowCount()))
+        self.total_label.setText(f"Total Price: PHP{total:.2f}")
 
     def load_cart_items(self, search_query=None):
         conn = sqlite3.connect('j7h.db')
@@ -112,6 +130,7 @@ class CartTab(QtWidgets.QWidget):
         self.resize_table()
         conn.close()
         self.cart_table.setColumnHidden(0, True)
+        self.update_total_label()
 
     def on_selection_changed(self):
         selected_rows = set()
@@ -122,10 +141,12 @@ class CartTab(QtWidgets.QWidget):
                 item = self.cart_table.item(row, column)
                 if item:
                     item.setSelected(True)
+        self.update_total_label()
 
     def search_cart(self):
         search_query = self.lineEdit.text()
         self.load_cart_items(search_query)
+        self.update_total_label()
 
     def remove_item(self):
         selected_rows = set()
@@ -150,6 +171,7 @@ class CartTab(QtWidgets.QWidget):
         conn.commit()
         conn.close()
         self.load_cart_items()
+        self.update_total_label()
 
     def clear_cart(self):
         conn = sqlite3.connect('j7h.db')
@@ -174,9 +196,11 @@ class CartTab(QtWidgets.QWidget):
         
         # Inform the user about the cleared cart
         QtWidgets.QMessageBox.information(self, "Clear Cart", "All items have been removed from the cart.")
-        
+        self.update_total_label()
+
         # Return the quantities of all products removed
         return quantities_removed
+        
 
     def checkout(self):
         # Prompt user for customer name
@@ -268,6 +292,7 @@ class CartTab(QtWidgets.QWidget):
             # Display success message
             if transaction_successful:
                 QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
+        self.update_total_label()
 
     def resize_table(self):
         header = self.cart_table.horizontalHeader()
