@@ -211,7 +211,6 @@ class CartTab(QtWidgets.QWidget):
                 conn.close()
                 return
 
-            # Iterate over rows in the cart table
             for row in range(self.cart_table.rowCount()):
                 product_name_item = self.cart_table.item(row, 0)
                 brand_item = self.cart_table.item(row, 1)
@@ -220,9 +219,7 @@ class CartTab(QtWidgets.QWidget):
                 qty_item = self.cart_table.item(row, 5)
                 total_price_item = self.cart_table.item(row, 6)
 
-                # Check if qty_item is not empty
                 if qty_item and qty_item.text():
-                    # Extract data from table items
                     product_name = product_name_item.text()
                     qty = int(qty_item.text())
                     total_price = float(total_price_item.text())
@@ -230,42 +227,49 @@ class CartTab(QtWidgets.QWidget):
                     var = var_item.text()
                     size = size_item.text()
 
-                    # Retrieve product ID from products table
                     cursor.execute("""SELECT product_id FROM products 
-                                   WHERE product_name =? 
-                                   AND (brand =? OR brand IS NULL) 
-                                   AND (var =? OR brand IS NULL)
-                                   AND (size =? OR size IS NULL)""", 
+                                WHERE product_name =? 
+                                AND (brand =? OR brand IS NULL) 
+                                AND (var =? OR brand IS NULL)
+                                AND (size =? OR size IS NULL)""", 
                                 (product_name, brand, var, size))
                     product_id_result = cursor.fetchone()
 
                     if product_id_result:
                         product_id = product_id_result[0]
+                    else:
+                        # Handle the case where product_id_result is None
+                        product_id = None  # or some default value
+                        # You may also want to display an error message or log an error
 
-                        # Replace with actual transaction type logic
-                        transaction_type = "purchase"
+                    # Generate a unique transaction ID                     
+                    transaction_id = str(uuid.uuid4())
+                    # Replace with actual transaction type logic
+                    transaction_type = "purchase"   
 
-                        # Insert into transactions table
-                        cursor.execute('''INSERT INTO transactions (customer, product_name, qty, total_price, date, type, product_id, log_id, brand, var, size)
-                                VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
-                            (customer_name, product_name, qty, total_price, current_date, transaction_type, product_id, log_id, brand, var, size))
+                    conn = sqlite3.connect('j7h.db')
+                    cursor = conn.cursor()
+                    # Insert into transactions table
+                    cursor.execute('''INSERT INTO transactions (transaction_id, customer, product_name, qty, total_price, date, type, product_id, log_id, brand, var, size)
+                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''',
+                    (transaction_id, customer_name, product_name, qty, total_price, current_date, transaction_type, product_id, log_id, brand, var, size))
 
-                        # Insert into user_logs table
-                        action = "checkout"
-                        cursor.execute('''INSERT INTO user_logs (user_id, action, time, date)
-                                VALUES (?,?,?,?)''',
-                            (user_id, action, current_time, current_date))
+                    # Insert into user_logs table
+                    action = "checkout"
+                    cursor.execute('''INSERT INTO user_logs (user_id, action, time, date)
+                        VALUES (?,?,?,?)''',
+                    (user_id, action, current_time, current_date))
 
-                        log_id += 1  # Increment log_id for the next entry if there are multiple items
+                    log_id += 1  # Increment log_id for the next entry if there are multiple items
 
-                conn.commit()
-                conn.close()
+                    conn.commit()
+                    conn.close()
 
-                # Clear cart table
-                self.clear_cart()
+                    # Clear cart table
+                    self.clear_cart()
 
-                # Display success message
-                QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
+                    # Display success message
+                    QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
 
 
     def resize_table(self):
@@ -273,4 +277,3 @@ class CartTab(QtWidgets.QWidget):
         for i in range(1, self.cart_table.columnCount() - 1):
             header.setSectionResizeMode(i, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(self.cart_table.columnCount() - 1, QtWidgets.QHeaderView.ResizeToContents)
-
