@@ -178,12 +178,12 @@ class ReportsTab(QtWidgets.QWidget):
         selected_rows = set()
         for item in self.transactions_table.selectedItems():
             row = item.row()
-            customer_name = self.transactions_table.item(row, 1).text()
+            customer_name = self.transactions_table.item(row, 2).text()
             selected_rows.add(row)
 
             # Find all other rows with the same customer name
             for other_row in range(self.transactions_table.rowCount()):
-                if other_row != row and self.transactions_table.item(other_row, 1).text() == customer_name:
+                if other_row != row and self.transactions_table.item(other_row, 2).text() == customer_name:
                     selected_rows.add(other_row)
 
         # Select all identified rows in the table
@@ -223,13 +223,13 @@ class ReportsTab(QtWidgets.QWidget):
         rows = cursor.fetchall()
         conn.close()
 
-        # Group rows by time
+        # Group rows by time and transaction ID
         grouped_rows = {}
         for row in rows:
-            time = row[4]  
-            if time not in grouped_rows:
-                grouped_rows[time] = []
-            grouped_rows[time].append(row)
+            transaction_id = row[0]  # Use transaction_id for grouping
+            if transaction_id not in grouped_rows:
+                grouped_rows[transaction_id] = []
+            grouped_rows[transaction_id].append(row)
 
         # Calculate total number of rows after grouping
         total_rows = sum(len(group) for group in grouped_rows.values())
@@ -239,17 +239,24 @@ class ReportsTab(QtWidgets.QWidget):
 
         # Populate the table with transaction data
         row_number = 0
-        for date, group in grouped_rows.items():
-            if len(group) > 1:
-                self.transactions_table.setSpan(row_number, 0, len(group), 1)  # Span from row_number, column 0, spanning len(group) rows, 1 column
+        for transaction_id, group in grouped_rows.items():
+            span_length = len(group)
             for row_data in group:
                 for column_number, data in enumerate(row_data):
                     item = QTableWidgetItem(str(data))
                     self.transactions_table.setItem(row_number, column_number, item)
+                if span_length > 1:
+                    self.transactions_table.setSpan(row_number, 0, span_length, 1)  # Span from row_number, column 0, spanning span_length rows, 1 column
+                    self.transactions_table.setSpan(row_number, 1, span_length, 1)  # Span from row_number, column 1, spanning span_length rows, 1 column
+                    self.transactions_table.setSpan(row_number, 2, span_length, 1)  # Span from row_number, column 2, spanning span_length rows, 1 column
+                    self.transactions_table.setSpan(row_number, 3, span_length, 1)  # Span from row_number, column 3, spanning span_length rows, 1 column
+                    self.transactions_table.setSpan(row_number, 4, span_length, 1)  # Span from row_number, column 4, spanning span_length rows, 1 column
+                    self.transactions_table.setSpan(row_number, 5, span_length, 1)  # Span from row_number, column 5, spanning span_length rows, 1 column
                 row_number += 1
 
         # Resize columns to fit contents
         self.transactions_table.resizeColumnsToContents()
+
     
     def flag_transaction(self):
         for row in set(item.row() for item in self.transactions_table.selectedItems()):
