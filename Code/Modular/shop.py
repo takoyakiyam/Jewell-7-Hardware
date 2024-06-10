@@ -34,22 +34,24 @@ class ShopTab(QtWidgets.QWidget):
         cursor.execute("SELECT * FROM products WHERE qty > 0")
 
         if search_query:
-            query = "SELECT * FROM products WHERE qty > 0 AND (product_name LIKE ? OR brand LIKE ? OR var LIKE ? OR size LIKE ?)"
-            cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
+            query = "SELECT * FROM products WHERE qty > 0 AND (category LIKE ? OR product_name LIKE ? OR brand LIKE ? OR var LIKE ? OR size LIKE ?)"
+            cursor.execute(query, (f"%{search_query}%",f"%{search_query}%", f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
         else:
             cursor.execute("SELECT * FROM products WHERE qty > 0")
 
         rows = cursor.fetchall()
         self.tableWidget.setRowCount(len(rows))
         for row_number, row_data in enumerate(rows):
-            self.tableWidget.setItem(row_number, 0, QtWidgets.QTableWidgetItem(str(row_data[1])))  # product
-            self.tableWidget.setItem(row_number, 1, QtWidgets.QTableWidgetItem(str(row_data[2])))  # brand
-            self.tableWidget.setItem(row_number, 2, QtWidgets.QTableWidgetItem(str(row_data[3])))  # var
-            self.tableWidget.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(row_data[4])))  # size
-            self.tableWidget.setItem(row_number, 4, QtWidgets.QTableWidgetItem(str(row_data[5])))  # price
+            self.tableWidget.setItem(row_number, 0, QtWidgets.QTableWidgetItem(str(row_data[7])))  # category
+            self.tableWidget.setItem(row_number, 1, QtWidgets.QTableWidgetItem(str(row_data[1])))  # product
+            self.tableWidget.setItem(row_number, 2, QtWidgets.QTableWidgetItem(str(row_data[2])))  # brand
+            self.tableWidget.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(row_data[3])))  # var
+            self.tableWidget.setItem(row_number, 4, QtWidgets.QTableWidgetItem(str(row_data[4])))  # size
+            self.tableWidget.setItem(row_number, 5, QtWidgets.QTableWidgetItem(str(row_data[5])))  # price
             qty = row_data[6]  # qty
-            self.tableWidget.setItem(row_number, 5, QtWidgets.QTableWidgetItem(str(qty)))  # Convert qty to string before setting it as text
+            self.tableWidget.setItem(row_number, 6, QtWidgets.QTableWidgetItem(str(qty)))  # Convert qty to string before setting it as text
         conn.close()
+
 
     def search_products(self):
         search_query = self.lineEdit.text()
@@ -80,8 +82,8 @@ class ShopTab(QtWidgets.QWidget):
         self.layout.addLayout(self.horizontalLayout)
 
         self.tableWidget = QtWidgets.QTableWidget()
-        self.tableWidget.setColumnCount(6)
-        self.tableWidget.setHorizontalHeaderLabels(['Product', 'Brand', 'Variation', 'Size', 'Price', 'Items in Stock'])
+        self.tableWidget.setColumnCount(7) 
+        self.tableWidget.setHorizontalHeaderLabels(['Category', 'Product', 'Brand', 'Variation', 'Size', 'Price', 'Items in Stock'])
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
@@ -94,21 +96,23 @@ class ShopTab(QtWidgets.QWidget):
         self.layout.addWidget(self.add_to_cart_button)
 
         self.tableWidget.itemSelectionChanged.connect(self.on_selection_changed)
-
+        
     def add_to_cart(self, quantity):
         selected_rows = self.tableWidget.selectionModel().selectedRows()
         for row in selected_rows:
-            product_item = self.tableWidget.item(row.row(), 0)  # Product name
-            brand_item = self.tableWidget.item(row.row(), 1)  # Brand
-            var_item = self.tableWidget.item(row.row(), 2)  # Variation
-            size_item = self.tableWidget.item(row.row(), 3)  # Size
-            price_item = self.tableWidget.item(row.row(), 4)  # Price
-            qty_item = self.tableWidget.item(row.row(), 5)  # Items in stock
+            category_item = self.tableWidget.item(row.row(), 0)  # Category
+            product_item = self.tableWidget.item(row.row(), 1)  # Product name
+            brand_item = self.tableWidget.item(row.row(), 2)  # Brand
+            var_item = self.tableWidget.item(row.row(), 3)  # Variation
+            size_item = self.tableWidget.item(row.row(), 4)  # Size
+            price_item = self.tableWidget.item(row.row(), 5)  # Price
+            qty_item = self.tableWidget.item(row.row(), 6)  # Items in stock
 
-            if not all([product_item, qty_item, price_item]):
+            if not all([category_item, product_item, qty_item, price_item]):
                 QtWidgets.QMessageBox.warning(self, "Error", "One or more fields are missing!")
                 continue
-
+            
+            category = category_item.text()
             product_name = product_item.text()
             brand = brand_item.text() if brand_item else None
             var = var_item.text() if var_item else None
@@ -116,7 +120,7 @@ class ShopTab(QtWidgets.QWidget):
             price_text = price_item.text()
             qty_text = qty_item.text()
 
-            if not all([product_name, price_text, qty_text]):
+            if not all([category_item, product_name, price_text, qty_text]):
                 QtWidgets.QMessageBox.warning(self, "Error", "One or more fields have empty values!")
                 continue
 
@@ -151,9 +155,9 @@ class ShopTab(QtWidgets.QWidget):
                     if product_id_result:
                         product_id = product_id_result[0]
                 
-                        cursor.execute('''INSERT INTO cart (product_name, qty, total_price, date, transaction_id, product_id, log_id, brand, var, size)
+                        cursor.execute('''INSERT INTO cart (category, product_name, qty, total_price, date, transaction_id, product_id, log_id, brand, var, size)
                                       VALUES (?,?,?,?,?,?,?,?,?,?)''',
-                                   (product_name, quantity, total_price, date, transaction_id, product_id, log_id, brand, var, size))
+                                   (category_item, product_name, quantity, total_price, date, transaction_id, product_id, log_id, brand, var, size))
 
                         conn.commit()
 
