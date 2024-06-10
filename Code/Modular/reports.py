@@ -82,6 +82,16 @@ class ReportsTab(QtWidgets.QWidget):
         self.setGeometry(100, 100, 800, 600)
         self.layout = QtWidgets.QVBoxLayout(self)
 
+        # Search Component
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.lineEdit = QtWidgets.QLineEdit()
+        self.search_button = QtWidgets.QPushButton("Search")
+        self.search_button.clicked.connect(self.search_logs)
+        self.search_button.clicked.connect(self.search_transactions)
+        self.horizontalLayout.addWidget(self.lineEdit)
+        self.horizontalLayout.addWidget(self.search_button)
+        self.layout.addLayout(self.horizontalLayout)
+
         # Create tab widget and sub-tabs
         self.tab_widget = QtWidgets.QTabWidget()
         self.reports_tab = QtWidgets.QWidget()
@@ -99,6 +109,9 @@ class ReportsTab(QtWidgets.QWidget):
 
         # Connect itemSelectionChanged signal to handle row selection
         self.transactions_table.itemSelectionChanged.connect(self.on_selection_changed)
+
+        # Connect tabChanged signal to clear the search query
+        self.tab_widget.currentChanged.connect(self.clear_search_query)
 
     def initReportsTab(self):
         layout = QtWidgets.QVBoxLayout(self.reports_tab)
@@ -174,6 +187,19 @@ class ReportsTab(QtWidgets.QWidget):
         # Add buttons layout to the main layout
         layout.addLayout(buttons_layout)
 
+    def search_logs(self):
+        search_query = self.lineEdit.text()
+        self.load_user_logs(search_query)
+
+    def search_transactions(self):
+        search_query = self.lineEdit.text()
+        self.load_transactions(search_query)
+
+    def clear_search_query(self):
+        self.lineEdit.clear()
+        self.search_logs()
+        self.search_transactions()
+
     def on_selection_changed(self):
         selected_rows = set()
         for item in self.transactions_table.selectedItems():
@@ -193,10 +219,16 @@ class ReportsTab(QtWidgets.QWidget):
                 if item:
                     item.setSelected(True)
 
-    def load_user_logs(self):
+    def load_user_logs(self, search_query=None):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT log_id, user_id, action, time, date FROM user_logs")
+
+        if search_query:
+            query = "SELECT log_id, user_id, action, time, date FROM user_logs WHERE user_id LIKE ? OR action LIKE ? OR date LIKE ?"
+            cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
+        else:
+            cursor.execute("SELECT log_id, user_id, action, time, date FROM user_logs")
+
         rows = cursor.fetchall()
         conn.close()
 
@@ -212,14 +244,25 @@ class ReportsTab(QtWidgets.QWidget):
         # Resize columns to fit contents
         self.user_logs_table.resizeColumnsToContents()
 
-    def load_transactions(self):
+    def load_transactions(self, search_query= None):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
-        cursor.execute("""SELECT transactions.transaction_id, users.first_name, transactions.customer, transactions.qty, transactions.date, transactions.time, transactions.total_price, 
+
+        if search_query:
+            query = """SELECT transactions.transaction_id, users.first_name, transactions.customer, transactions.qty, transactions.date, transactions.time, transactions.total_price, 
                             transactions.product_id, products.category, products.product_name, products.brand, products.size, products.var
                         FROM transactions
                         JOIN products ON transactions.product_id = products.product_id
-                        JOIN users ON transactions.user_id = users.user_id""")
+                        JOIN users ON transactions.user_id = users.user_id
+                        WHERE transactions.transaction_id LIKE ? OR users.first_name LIKE ? OR transactions.customer LIKE ?"""
+            cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
+        else:
+            cursor.execute("""SELECT transactions.transaction_id, users.first_name, transactions.customer, transactions.qty, transactions.date, transactions.time, transactions.total_price, 
+                                transactions.product_id, products.category, products.product_name, products.brand, products.size, products.var
+                            FROM transactions
+                            JOIN products ON transactions.product_id = products.product_id
+                            JOIN users ON transactions.user_id = users.user_id""")
+            
         rows = cursor.fetchall()
         conn.close()
 
