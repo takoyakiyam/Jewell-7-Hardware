@@ -1,7 +1,8 @@
 import sqlite3
 from datetime import datetime
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QSpinBox, QPushButton, QLineEdit
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QSpinBox, QPushButton, QLineEdit, QMessageBox
 from PyQt5 import QtWidgets, QtCore
+import uuid
 
 class CustomerNameDialog(QDialog):
     def __init__(self):
@@ -201,7 +202,6 @@ class CartTab(QtWidgets.QWidget):
         # Return the quantities of all products removed
         return quantities_removed
         
-
     def checkout(self):
         # Prompt user for customer name
         customer_dialog = CustomerNameDialog()
@@ -220,9 +220,12 @@ class CartTab(QtWidgets.QWidget):
             if user_id_result:
                 user_id = user_id_result[0]
             else:
-                QtWidgets.QMessageBox.warning(self, "Error", "User ID not found!")
+                QMessageBox.warning(self, "Error", "User ID not found!")
                 conn.close()
                 return
+
+            # Generate a unique transaction_id using UUID
+            transaction_id = str(uuid.uuid4())
 
             # Retrieve the next available log_id
             cursor.execute("SELECT IFNULL(MAX(log_id), 0) + 1 FROM user_logs")
@@ -230,12 +233,11 @@ class CartTab(QtWidgets.QWidget):
             if log_id_result:
                 log_id = log_id_result[0]
             else:
-                QtWidgets.QMessageBox.warning(self, "Error", "Unable to determine next log ID!")
+                QMessageBox.warning(self, "Error", "Unable to determine next log ID!")
                 conn.close()
                 return
-
+            
             transaction_successful = True
-
             for row in range(self.cart_table.rowCount()):
                 product_name_item = self.cart_table.item(row, 1)
                 brand_item = self.cart_table.item(row, 2)
@@ -260,17 +262,18 @@ class CartTab(QtWidgets.QWidget):
                         product_id = product_id_result[0]
                     else:
                         # Log the error and continue with the next item
-                        QtWidgets.QMessageBox.warning(self, "Error", f"Product ID not found for {brand}!")
+                        QMessageBox.warning(self, "Error", f"Product ID not found for {brand}!")
                         transaction_successful = False
                         continue  # Skip this item
 
                     # Replace with actual transaction type logic
                     transaction_type = "purchase"
+                    transaction_id = str(uuid.uuid4())
 
                     # Insert into transactions table
-                    cursor.execute('''INSERT INTO transactions (customer, product_name, qty, total_price, date, time, type, product_id, log_id, brand, var, size, user_id)
-                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-                    (customer_name, product_name, qty, total_price, current_date, current_time, transaction_type, product_id, log_id, brand, var, size, user_id))
+                    cursor.execute('''INSERT INTO transactions (transaction_id, customer, product_name, qty, total_price, date, time, type, product_id, log_id, brand, var, size, user_id)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                    (transaction_id, customer_name, product_name, qty, total_price, current_date, current_time, transaction_type, product_id, log_id, brand, var, size, user_id))
 
                     # Update the quantity in the products table
                     cursor.execute("UPDATE products SET qty = qty - ? WHERE product_id = ?", (qty, product_id))
@@ -291,8 +294,13 @@ class CartTab(QtWidgets.QWidget):
 
             # Display success message
             if transaction_successful:
-                QtWidgets.QMessageBox.information(self, "Checkout", "Checkout successful!")
+                QMessageBox.information(self, "Checkout", "Checkout successful!")
+            else:
+                QMessageBox.warning(self, "Checkout", "Checkout failed. Some items were not processed.")
+            
         self.update_total_label()
+
+
 
     def resize_table(self):
         header = self.cart_table.horizontalHeader()
