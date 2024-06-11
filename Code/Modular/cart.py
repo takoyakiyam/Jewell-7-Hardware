@@ -282,7 +282,7 @@ class CartTab(QtWidgets.QWidget):
                     action = "checkout"
                     cursor.execute('''INSERT INTO user_logs (user_id, action, time, date)
                         VALUES (?,?,?,?)''',
-                    (user_id, action, current_time, current_date))
+                    (user_id_result, action, current_time, current_date))
 
                     log_id += 1  # Increment log_id for the next entry if there are multiple items
 
