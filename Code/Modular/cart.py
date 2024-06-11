@@ -107,17 +107,17 @@ class CartTab(QtWidgets.QWidget):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
 
-        cursor.execute("""SELECT rowid, product_name, brand, var, size, qty, total_price FROM cart""")
+        cursor.execute("""SELECT rowid, product_name, brand, var, size, qty, total_price FROM cart ORDER BY cart_id DESC""")
 
         if search_query:
             query = """
                 SELECT c.product_name, c.qty, c.brand, c.var, c.size, p.price, (c.qty * p.price) AS total_price
                 FROM cart c
                 INNER JOIN products p ON c.product_name = p.product_name
-                WHERE c.product_name LIKE ? OR c.brand LIKE ? OR c.var LIKE ? OR c.size LIKE ?
-            """
+                WHERE c.qty > 0 AND (c.product_name LIKE ? OR c.brand LIKE ? OR c.var LIKE ? OR c.size LIKE ?)
+                ORDER BY c.cart_id DESC
+                """
             cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
-
         products = cursor.fetchall()
 
         self.cart_table.setRowCount(len(products))

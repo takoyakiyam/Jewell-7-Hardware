@@ -31,27 +31,35 @@ class ShopTab(QtWidgets.QWidget):
     def load_products(self, search_query=None):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM products WHERE qty > 0")
+        cursor.execute("SELECT * FROM products WHERE qty > 0 ORDER BY product_id DESC")
 
         if search_query:
-            query = "SELECT * FROM products WHERE qty > 0 AND (category LIKE ? OR product_name LIKE ? OR brand LIKE ? OR var LIKE ? OR size LIKE ?)"
-            cursor.execute(query, (f"%{search_query}%",f"%{search_query}%", f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
+            query = """
+                SELECT * FROM products 
+                WHERE qty > 0 
+                AND (product_name LIKE ? 
+                OR brand LIKE ? 
+                OR var LIKE ? 
+                OR size LIKE ?
+                OR category LIKE ?) 
+                ORDER BY product_id DESC
+                """
+            cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
         else:
-            cursor.execute("SELECT * FROM products WHERE qty > 0")
+            cursor.execute("SELECT * FROM products WHERE qty > 0 ORDER BY product_id DESC")
 
         rows = cursor.fetchall()
         self.tableWidget.setRowCount(len(rows))
         for row_number, row_data in enumerate(rows):
-            self.tableWidget.setItem(row_number, 0, QtWidgets.QTableWidgetItem(str(row_data[7])))  # category
-            self.tableWidget.setItem(row_number, 1, QtWidgets.QTableWidgetItem(str(row_data[1])))  # product
-            self.tableWidget.setItem(row_number, 2, QtWidgets.QTableWidgetItem(str(row_data[2])))  # brand
-            self.tableWidget.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(row_data[3])))  # var
-            self.tableWidget.setItem(row_number, 4, QtWidgets.QTableWidgetItem(str(row_data[4])))  # size
-            self.tableWidget.setItem(row_number, 5, QtWidgets.QTableWidgetItem(str(row_data[5])))  # price
+            self.tableWidget.setItem(row_number, 0, QtWidgets.QTableWidgetItem(str(row_data[1])))  # product
+            self.tableWidget.setItem(row_number, 1, QtWidgets.QTableWidgetItem(str(row_data[2])))  # brand
+            self.tableWidget.setItem(row_number, 2, QtWidgets.QTableWidgetItem(str(row_data[3])))  # var
+            self.tableWidget.setItem(row_number, 3, QtWidgets.QTableWidgetItem(str(row_data[4])))  # size
+            self.tableWidget.setItem(row_number, 4, QtWidgets.QTableWidgetItem(str(row_data[5])))  # price
             qty = row_data[6]  # qty
-            self.tableWidget.setItem(row_number, 6, QtWidgets.QTableWidgetItem(str(qty)))  # Convert qty to string before setting it as text
+            self.tableWidget.setItem(row_number, 5, QtWidgets.QTableWidgetItem(str(qty)))  # Convert qty to string before setting it as text
+            self.tableWidget.setItem(row_number, 6, QtWidgets.QTableWidgetItem(str(row_data[7])))  # category
         conn.close()
-
 
     def search_products(self):
         search_query = self.lineEdit.text()
@@ -75,7 +83,10 @@ class ShopTab(QtWidgets.QWidget):
         # Search Component
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.lineEdit = QtWidgets.QLineEdit()
+        self.lineEdit.setFixedHeight(40) 
+
         self.search_button = QtWidgets.QPushButton("Search")
+        self.search_button.setFixedHeight(40)
         self.search_button.clicked.connect(self.search_products)
         self.horizontalLayout.addWidget(self.lineEdit)
         self.horizontalLayout.addWidget(self.search_button)
@@ -83,7 +94,7 @@ class ShopTab(QtWidgets.QWidget):
 
         self.tableWidget = QtWidgets.QTableWidget()
         self.tableWidget.setColumnCount(7) 
-        self.tableWidget.setHorizontalHeaderLabels(['Category', 'Product', 'Brand', 'Variation', 'Size', 'Price', 'Items in Stock'])
+        self.tableWidget.setHorizontalHeaderLabels(['Product', 'Brand', 'Variation', 'Size', 'Price', 'Items in Stock', 'Category'])
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 

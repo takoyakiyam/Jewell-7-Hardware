@@ -13,66 +13,65 @@ class ProductsTab(QtWidgets.QWidget):
 
     def setup_ui(self):
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
-        self.horizontalLayout = QtWidgets.QHBoxLayout()
-        
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+    
         font = QtGui.QFont()
         font.setPointSize(22)
         font.setBold(True)
-        
-        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+    
         self.lineEdit = QtWidgets.QLineEdit(self)
+        self.lineEdit.setFixedHeight(40)  # Match the shop tab's search box height
         self.horizontalLayout_2.addWidget(self.lineEdit)
-        self.search_button = QtWidgets.QPushButton(self)
-        self.search_button.setFont(font)
-        self.search_button.setText("Search")
+
+        self.search_button = QtWidgets.QPushButton("Search")
+        self.search_button.setFixedHeight(40)  # Match the shop tab's search button height
         self.search_button.clicked.connect(self.search_products)
         self.horizontalLayout_2.addWidget(self.search_button)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
-        
+    
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
-        
-        self.horizontalLayout_4.addLayout(self.verticalLayout_2)
-        spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_4.addItem(spacerItem2)
-        
         self.scrollArea = QtWidgets.QScrollArea(self)
         self.scrollArea.setWidgetResizable(True)
         self.tableWidget = QtWidgets.QTableWidget()
-        self.tableWidget.setFixedHeight(self.tableWidget.verticalHeader().defaultSectionSize() * 30)
+        self.tableWidget.setFixedHeight(self.tableWidget.verticalHeader().defaultSectionSize() * 30)  # Adjust multiplier as needed
+        self.tableWidget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.tableWidget.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.tableWidget.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+    
+        # Ensure consistent border and frame shape
+        self.tableWidget.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.tableWidget.setFrameShadow(QtWidgets.QFrame.Plain)
+        self.tableWidget.setStyleSheet("QTableWidget { border: none; }")  # Ensure no border
+        self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    
         self.scrollArea.setWidget(self.tableWidget)
         self.horizontalLayout_4.addWidget(self.scrollArea)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
-        
+    
         self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
-        spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_5.addItem(spacerItem3)
-        
-        self.addProduct_button = QtWidgets.QPushButton(self)
-        self.addProduct_button.setFont(font)
-        self.addProduct_button.setMinimumSize(QtCore.QSize(80, 80))
+        self.addProduct_button = QtWidgets.QPushButton()
         self.addProduct_button.setIcon(QtGui.QIcon("plus_icon.png"))
-        self.addProduct_button.setIconSize(QtCore.QSize(36, 36))
+        self.addProduct_button.setFont(font)
+        self.addProduct_button.setFixedHeight(40)  # Adjust height as needed
         self.addProduct_button.clicked.connect(self.open_add_product_dialog)
         self.horizontalLayout_5.addWidget(self.addProduct_button)
-        
-        self.modifyProduct_button = QtWidgets.QPushButton(self)
-        self.modifyProduct_button.setFont(font)
-        self.modifyProduct_button.setMinimumSize(QtCore.QSize(80, 80))
+    
+        self.modifyProduct_button = QtWidgets.QPushButton()
         self.modifyProduct_button.setIcon(QtGui.QIcon("edit_icon.png"))
-        self.modifyProduct_button.setIconSize(QtCore.QSize(36, 36))
+        self.modifyProduct_button.setFont(font)
+        self.modifyProduct_button.setFixedHeight(40)  # Adjust height as needed
         self.modifyProduct_button.clicked.connect(self.open_modify_product_dialog)
         self.horizontalLayout_5.addWidget(self.modifyProduct_button)
-        
-        self.voidProduct_button = QtWidgets.QPushButton(self)
-        self.voidProduct_button.setFont(font)
-        self.voidProduct_button.setMinimumSize(QtCore.QSize(80, 80))
+    
+        self.voidProduct_button = QtWidgets.QPushButton()
         self.voidProduct_button.setIcon(QtGui.QIcon("bin_icon.png"))
-        self.voidProduct_button.setIconSize(QtCore.QSize(36, 36))
+        self.voidProduct_button.setFont(font)
+        self.voidProduct_button.setFixedHeight(40)  # Adjust height as needed
         self.voidProduct_button.clicked.connect(self.void_product)
         self.horizontalLayout_5.addWidget(self.voidProduct_button)
-        
+    
         self.verticalLayout.addLayout(self.horizontalLayout_5)
+
 
     def apply_stock_alert(self, row, column, color):
         item = self.tableWidget.item(row, column)
@@ -99,21 +98,21 @@ class ProductsTab(QtWidgets.QWidget):
         cur = conn.cursor()
         if search_query:
             cur.execute("SELECT rowid, product_name, brand, var, size, price, qty, category FROM products WHERE "
-                        "product_name LIKE ? OR brand LIKE ? OR var LIKE ? OR size LIKE ? OR category LIKE ?",
+                        "product_name LIKE ? OR brand LIKE ? OR var LIKE ? OR size LIKE ? OR category LIKE ? ORDER BY product_id DESC",
                         ('%{}%'.format(search_query), '%{}%'.format(search_query), '%{}%'.format(search_query), '%{}%'.format(search_query), '%{}%'.format(search_query)))
         else:
-            cur.execute("SELECT rowid, product_name, brand, var, size, price, qty, category FROM products")
+            cur.execute("SELECT rowid, product_name, brand, var, size, price, qty, category FROM products ORDER BY product_id DESC")
 
         products = cur.fetchall()
         self.tableWidget.setRowCount(len(products))
         self.tableWidget.setColumnCount(8)
-        self.tableWidget.setHorizontalHeaderLabels(["RowID", "Product Name", "Brand", "Var", "Size", "Price", "Qty", "Category"])
+        self.tableWidget.setHorizontalHeaderLabels(['RowID', 'Product', 'Brand', 'Variation', 'Size', 'Price', 'Items in Stock', 'Category'])
 
         for i, product in enumerate(products):
             for j, value in enumerate(product):
                 self.tableWidget.setItem(i, j, QtWidgets.QTableWidgetItem(str(value)))
 
-        self.resize_table()
+
         conn.close()
         self.tableWidget.setColumnHidden(0, True)
         self.stock_alert()
@@ -127,12 +126,6 @@ class ProductsTab(QtWidgets.QWidget):
                 item = self.tableWidget.item(row, column)
                 if item:
                     item.setSelected(True)
-
-    def resize_table(self):
-        header = self.tableWidget.horizontalHeader()
-        for i in range(1, self.tableWidget.columnCount() - 1):
-            header.setSectionResizeMode(i, QtWidgets.QHeaderView.Stretch)
-        header.setSectionResizeMode(self.tableWidget.columnCount() - 1, QtWidgets.QHeaderView.ResizeToContents)
 
     def search_products(self):
         search_query = self.lineEdit.text()
