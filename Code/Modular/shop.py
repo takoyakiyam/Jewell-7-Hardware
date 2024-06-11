@@ -138,7 +138,6 @@ class ShopTab(QtWidgets.QWidget):
 
                     total_price = quantity * price
                     log_id = 1  # Replace with actual log ID retrieval logic
-                    transaction_id = 1  # Replace with actual transaction ID logic
                     date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
                     # Retrieve product ID from products table
@@ -153,9 +152,9 @@ class ShopTab(QtWidgets.QWidget):
                     if product_id_result:
                         product_id = product_id_result[0]
                 
-                        cursor.execute('''INSERT INTO cart (product_name, qty, total_price, date, transaction_id, product_id, log_id, brand, var, size)
-                                      VALUES (?,?,?,?,?,?,?,?,?,?)''',
-                                   (product_name, quantity, total_price, date, transaction_id, product_id, log_id, brand, var, size))
+                        cursor.execute('''INSERT INTO cart (product_name, qty, total_price, date, product_id, log_id, brand, var, size)
+                                      VALUES (?,?,?,?,?,?,?,?,?)''',
+                                   (product_name, quantity, total_price, date, product_id, log_id, brand, var, size))
 
                         conn.commit()
 
