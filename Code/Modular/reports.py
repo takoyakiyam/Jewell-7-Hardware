@@ -151,7 +151,7 @@ class ReportsTab(QtWidgets.QWidget):
         self.transactions_table = QtWidgets.QTableWidget()
         self.transactions_table.setColumnCount(13)  # Update column count to match the number of columns
         self.transactions_table.setHorizontalHeaderLabels([
-            'Transaction ID',  'Cashier', 'Customer', 'Quantity', 'Date','Time', 'Total Price', 'Product ID', 'Category', 'Product Name', 
+            'Transaction Price',  'Cashier', 'Customer', 'Quantity', 'Date','Time', 'Total Price', 'Product ID', 'Category', 'Product Name', 
             'Brand', 'Size', 'Variation',
         ])
         self.transactions_table.horizontalHeader().setStretchLastSection(True)
@@ -202,15 +202,24 @@ class ReportsTab(QtWidgets.QWidget):
 
     def on_selection_changed(self):
         selected_rows = set()
+        selected_transactions = set()  # Track selected transactions (customer name + time)
+
+        # Iterate over selected items to collect rows and transactions
         for item in self.transactions_table.selectedItems():
             row = item.row()
             customer_name = self.transactions_table.item(row, 2).text()
+            time = self.transactions_table.item(row, 5).text()  # Assuming time is in column 5
+            transaction = f"{customer_name} - {time}"
             selected_rows.add(row)
+            selected_transactions.add(transaction)
 
-            # Find all other rows with the same customer name
-            for other_row in range(self.transactions_table.rowCount()):
-                if other_row != row and self.transactions_table.item(other_row, 2).text() == customer_name:
-                    selected_rows.add(other_row)
+        # Find all rows with the same customer names and times as selected
+        for row in range(self.transactions_table.rowCount()):
+            customer_name = self.transactions_table.item(row, 2).text()
+            time = self.transactions_table.item(row, 5).text()  # Assuming time is in column 5
+            transaction = f"{customer_name} - {time}"
+            if transaction in selected_transactions:
+                selected_rows.add(row)
 
         # Select all identified rows in the table
         for row in selected_rows:
@@ -218,6 +227,7 @@ class ReportsTab(QtWidgets.QWidget):
                 item = self.transactions_table.item(row, column)
                 if item:
                     item.setSelected(True)
+
 
     def load_user_logs(self, search_query=None):
         conn = sqlite3.connect('j7h.db')
@@ -244,35 +254,38 @@ class ReportsTab(QtWidgets.QWidget):
         # Resize columns to fit contents
         self.user_logs_table.resizeColumnsToContents()
 
-    def load_transactions(self, search_query= None):
+    def load_transactions(self, search_query=None):
         conn = sqlite3.connect('j7h.db')
         cursor = conn.cursor()
 
         if search_query:
             query = """SELECT transactions.transaction_id, users.first_name, transactions.customer, transactions.qty, transactions.date, transactions.time, transactions.total_price, 
-                            transactions.product_id, products.category, products.product_name, products.brand, products.size, products.var
-                        FROM transactions
-                        JOIN products ON transactions.product_id = products.product_id
-                        JOIN users ON transactions.user_id = users.user_id
-                        WHERE transactions.transaction_id LIKE ? OR users.first_name LIKE ? OR transactions.customer LIKE ?"""
+                    transactions.product_id, products.category, products.product_name, products.brand, products.size, products.var
+                    FROM transactions
+                    JOIN products ON transactions.product_id = products.product_id
+                    JOIN users ON transactions.user_id = users.user_id
+                    WHERE transactions.transaction_id LIKE ? OR users.first_name LIKE ? OR transactions.customer LIKE ?"""
             cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
         else:
             cursor.execute("""SELECT transactions.transaction_id, users.first_name, transactions.customer, transactions.qty, transactions.date, transactions.time, transactions.total_price, 
-                                transactions.product_id, products.category, products.product_name, products.brand, products.size, products.var
-                            FROM transactions
-                            JOIN products ON transactions.product_id = products.product_id
-                            JOIN users ON transactions.user_id = users.user_id""")
-            
+                    transactions.product_id, products.category, products.product_name, products.brand, products.size, products.var
+                    FROM transactions
+                    JOIN products ON transactions.product_id = products.product_id
+                    JOIN users ON transactions.user_id = users.user_id""")
+
         rows = cursor.fetchall()
         conn.close()
 
-        # Group rows by time and transaction ID
+        # Group rows by customer name and time
         grouped_rows = {}
         for row in rows:
-            transaction_id = row[0]  # Use transaction_id for grouping
-            if transaction_id not in grouped_rows:
-                grouped_rows[transaction_id] = []
-            grouped_rows[transaction_id].append(row)
+            customer_name = row[2]
+            time = row[5] 
+            key = (customer_name, time)
+            if key not in grouped_rows:
+                grouped_rows[key] = []
+            grouped_rows[key].append(row)
+
 
         # Calculate total number of rows after grouping
         total_rows = sum(len(group) for group in grouped_rows.values())
@@ -282,25 +295,43 @@ class ReportsTab(QtWidgets.QWidget):
 
         # Populate the table with transaction data
         row_number = 0
-        for transaction_id, group in grouped_rows.items():
+        for customer_name, group in grouped_rows.items():
             span_length = len(group)
-            for row_data in group:
-                for column_number, data in enumerate(row_data):
+            total_total_price = 0  # Initialize total_total_price to 0
+
+            for i, row_data in enumerate(group):
+                total_price = float(row_data[6])  # Get the total price for each row
+                total_total_price += total_price  # Add to the total_total_price
+
+                if i == 0:  # For the first row in the group
+                    item = QTableWidgetItem(str(total_price))
+                    item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                    self.transactions_table.setItem(row_number, 0, item)
+                    # Set the span for the first column
+                    if span_length > 1:
+                        self.transactions_table.setSpan(row_number, 0, span_length, 1)
+                else:  # For subsequent rows in the group
+                    # For subsequent rows, leave the first column empty
+                    self.transactions_table.setItem(row_number, 0, QTableWidgetItem(''))
+
+                # Populate the rest of the data
+                for column_number, data in enumerate(row_data[1:], start=1):
                     item = QTableWidgetItem(str(data))
                     self.transactions_table.setItem(row_number, column_number, item)
-                if span_length > 1:
-                    self.transactions_table.setSpan(row_number, 0, span_length, 1)  # Span from row_number, column 0, spanning span_length rows, 1 column
-                    self.transactions_table.setSpan(row_number, 1, span_length, 1)  # Span from row_number, column 1, spanning span_length rows, 1 column
-                    self.transactions_table.setSpan(row_number, 2, span_length, 1)  # Span from row_number, column 2, spanning span_length rows, 1 column
-                    self.transactions_table.setSpan(row_number, 3, span_length, 1)  # Span from row_number, column 3, spanning span_length rows, 1 column
-                    self.transactions_table.setSpan(row_number, 4, span_length, 1)  # Span from row_number, column 4, spanning span_length rows, 1 column
-                    self.transactions_table.setSpan(row_number, 5, span_length, 1)  # Span from row_number, column 5, spanning span_length rows, 1 column
+
                 row_number += 1
+
+            # Set the total_total_price if there's more than one product in the group
+            if span_length > 1:
+                formatted_total_price = "{:.2f}".format(total_total_price)
+                item = QTableWidgetItem(str(formatted_total_price))
+                item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                self.transactions_table.setItem(row_number - span_length, 0, item)
+
 
         # Resize columns to fit contents
         self.transactions_table.resizeColumnsToContents()
 
-    
     def flag_transaction(self):
         for row in set(item.row() for item in self.transactions_table.selectedItems()):
             if row in self.flagged_rows:
