@@ -40,8 +40,9 @@ class AddToCartDialog(QDialog):
         return self.spin_box.value()
 
 class CartTab(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self, user_id):
         super().__init__()
+        self.user_id = user_id  # Store the user_id
         self.initUI()
         self.load_cart_items()  # Load cart items when CartTab is initialized
 
@@ -212,18 +213,13 @@ class CartTab(QtWidgets.QWidget):
             current_date = datetime.now().strftime('%Y-%m-%d')
             current_time = datetime.now().strftime("%I:%M %p")
 
-            # Retrieve the user_id
+            #connect to db
             conn = sqlite3.connect('j7h.db')
             cursor = conn.cursor()
-            cursor.execute("SELECT user_id FROM users ORDER BY user_id LIMIT 1")
-            user_id_result = cursor.fetchone()
-            if user_id_result:
-                user_id = user_id_result[0]
-            else:
-                QMessageBox.warning(self, "Error", "User ID not found!")
-                conn.close()
-                return
 
+            # Use the stored user_id
+            user_id = self.user_id
+            
             # Generate a unique transaction_id using UUID
             transaction_id = str(uuid.uuid4())
 
@@ -282,7 +278,7 @@ class CartTab(QtWidgets.QWidget):
                     action = "checkout"
                     cursor.execute('''INSERT INTO user_logs (user_id, action, time, date)
                         VALUES (?,?,?,?)''',
-                    (user_id_result, action, current_time, current_date))
+                    (user_id, action, current_time, current_date))
 
                     log_id += 1  # Increment log_id for the next entry if there are multiple items
 

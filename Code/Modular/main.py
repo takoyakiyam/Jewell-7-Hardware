@@ -6,6 +6,10 @@ from reports import ReportsTab
 from users import UsersTab
 
 class Ui_MainWindow(object):
+    def __init__(self, user_id):
+        self.user_id = user_id
+        print(user_id)
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1081, 851)
@@ -184,7 +188,7 @@ class Ui_MainWindow(object):
 
     def open_cart(self):
         if not hasattr(self, 'cart_tab'):
-            self.cart_tab = CartTab()
+            self.cart_tab = CartTab(self.user_id)
             self.stackedWidget.addWidget(self.cart_tab)
         self.stackedWidget.setCurrentWidget(self.cart_tab)
 

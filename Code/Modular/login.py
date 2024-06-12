@@ -153,7 +153,7 @@ class Ui_Login(QtWidgets.QMainWindow):
 
                 action = "login"
                 cursor.execute('''INSERT INTO user_logs (user_id, action, time, date) 
-                              VALUES (?, ?, ?, ?)''', (user_id, action, time_log, date_log))
+                            VALUES (?, ?, ?, ?)''', (user_id, action, time_log, date_log))
                 conn.commit()
 
                 msg = QtWidgets.QMessageBox()
@@ -162,7 +162,7 @@ class Ui_Login(QtWidgets.QMainWindow):
                 msg.setWindowTitle("Success")
                 msg.exec_()
 
-                self.open_main_window()
+                self.open_main_window(user_id)  # Pass user_id to the main window
 
             else:
                 self.show_error_message("Invalid username or password.")
@@ -171,6 +171,7 @@ class Ui_Login(QtWidgets.QMainWindow):
         finally:
             conn.close()
 
+
     def show_error_message(self, message):
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Warning)
@@ -178,9 +179,9 @@ class Ui_Login(QtWidgets.QMainWindow):
         msg.setWindowTitle("Error")
         msg.exec_()
 
-    def open_main_window(self):
+    def open_main_window(self, user_id):
         self.main_window = QtWidgets.QMainWindow()
-        self.ui = Ui_MainWindow()
+        self.ui = Ui_MainWindow(user_id)
         self.ui.setupUi(self.main_window)
         self.main_window.show()
 
