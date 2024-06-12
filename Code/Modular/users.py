@@ -1,16 +1,13 @@
 import sqlite3
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-import sqlite3
-from PyQt5 import QtCore, QtGui, QtWidgets
-
 class UsersTab(QtWidgets.QWidget):
     user_modified = QtCore.pyqtSignal()
-    
+
     def __init__(self, parent=None):
         super(UsersTab, self).__init__(parent)
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
-        
+
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.lineEdit = QtWidgets.QLineEdit(self)
         self.horizontalLayout_2.addWidget(self.lineEdit)
@@ -19,9 +16,14 @@ class UsersTab(QtWidgets.QWidget):
         self.search_button.clicked.connect(self.search_users)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
 
-        self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.scrollArea = QtWidgets.QScrollArea(self)
+        self.scrollArea.setWidgetResizable(True)
+        self.tableWidget = QtWidgets.QTableWidget()
+        self.tableWidget.setObjectName("tableWidget")
+        self.scrollArea.setWidget(self.tableWidget)
+        self.verticalLayout.addWidget(self.scrollArea)
 
+        self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
         button_size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
 
         self.modifyUser_button = QtWidgets.QPushButton(self)
@@ -29,36 +31,25 @@ class UsersTab(QtWidgets.QWidget):
         font.setPointSize(20)
         self.modifyUser_button.setFont(font)
         self.modifyUser_button.setObjectName("modifyUser_button")
-        self.modifyUser_button.setMinimumSize(QtCore.QSize(80, 80))
-        self.modifyUser_button.setSizePolicy(button_size_policy)
+        self.modifyUser_button.setFixedHeight(40)  # Adjust height as needed
         self.modifyUser_button.clicked.connect(self.open_modify_user_dialog)
         self.modifyUser_button.setIcon(QtGui.QIcon("edit_icon.png"))
         self.modifyUser_button.setIconSize(QtCore.QSize(36, 36))
+        self.horizontalLayout_4.addWidget(self.modifyUser_button)
 
         self.voidProduct_button = QtWidgets.QPushButton(self)
         font = QtGui.QFont()
         font.setPointSize(20)
         self.voidProduct_button.setFont(font)
         self.voidProduct_button.setObjectName("voidProduct_button")
-        self.voidProduct_button.setMinimumSize(QtCore.QSize(80, 80))
-        self.voidProduct_button.setSizePolicy(button_size_policy)
+        self.voidProduct_button.setFixedHeight(40)  # Adjust height as needed
         self.voidProduct_button.clicked.connect(self.void_user)
         self.voidProduct_button.setIcon(QtGui.QIcon("bin_icon.png"))
         self.voidProduct_button.setIconSize(QtCore.QSize(36, 36))
-
-        self.verticalLayout_2.addWidget(self.modifyUser_button)
-        self.verticalLayout_2.addWidget(self.voidProduct_button)
-        self.horizontalLayout_4.addLayout(self.verticalLayout_2)
-
-        self.scrollArea = QtWidgets.QScrollArea(self)
-        self.scrollArea.setWidgetResizable(True)
-        self.tableWidget = QtWidgets.QTableWidget()
-        self.tableWidget.setObjectName("tableWidget")
-        self.tableWidget.setFixedHeight(self.tableWidget.verticalHeader().defaultSectionSize() * 30)
-        self.scrollArea.setWidget(self.tableWidget)
-        self.horizontalLayout_4.addWidget(self.scrollArea)
+        self.horizontalLayout_4.addWidget(self.voidProduct_button)
 
         self.verticalLayout.addLayout(self.horizontalLayout_4)
+
         self.tableWidget.itemSelectionChanged.connect(self.on_selection_changed)
         self.load_data()
 
@@ -74,7 +65,7 @@ class UsersTab(QtWidgets.QWidget):
             cur.execute("SELECT rowid, first_name, last_name, username, password, loa FROM users")
 
         users = cur.fetchall()
-    
+
         self.tableWidget.setRowCount(len(users))
         self.tableWidget.setColumnCount(6)
         self.tableWidget.setHorizontalHeaderLabels(["RowID", "First Name", "Last Name", "Username", "Password", "LOA"])
@@ -105,7 +96,7 @@ class UsersTab(QtWidgets.QWidget):
         header.setSectionResizeMode(self.tableWidget.columnCount() - 1, QtWidgets.QHeaderView.Stretch)
 
         vertical_header = self.tableWidget.verticalHeader()
-        vertical_header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        vertical_header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
 
     def open_modify_user_dialog(self):
         selected_row = self.tableWidget.currentRow()
@@ -218,3 +209,12 @@ class ModifyUserDialog(QtWidgets.QDialog):
         conn.close()
 
         self.accept()
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = UsersTab()
+    MainWindow.setCentralWidget(ui)
+    MainWindow.show()
+    sys.exit(app.exec_())
