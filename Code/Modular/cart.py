@@ -248,10 +248,18 @@ class CartTab(QtWidgets.QWidget):
                     total_price = float(total_price_item.text())
                     brand = brand_item.text() if brand_item.text() else None
                     var = var_item.text() if var_item.text() else None
-                    size = size_item.text()
+                    size = size_item.text() if size_item.text() else None
 
-                    query = "SELECT product_id FROM products WHERE product_name = ? AND (brand = ? OR ? IS NULL) AND (var = ? OR ? IS NULL) AND (size = ? OR size IS NULL)"
-                    cursor.execute(query, (product_name, brand, brand, var, var, size))
+                    query = """
+                        SELECT product_id 
+                        FROM products 
+                        WHERE product_name = ? 
+                            AND (brand = ? OR brand IS NULL) 
+                            AND (var = ? OR var IS NULL) 
+                            AND (size = ? OR size IS NULL)
+                    """
+                    cursor.execute(query, (product_name, brand, var, size))
+
                     product_id_result = cursor.fetchone()
 
                     if product_id_result:
@@ -295,8 +303,6 @@ class CartTab(QtWidgets.QWidget):
                 QMessageBox.warning(self, "Checkout", "Checkout failed. Some items were not processed.")
             
         self.update_total_label()
-
-
 
     def resize_table(self):
         header = self.cart_table.horizontalHeader()
